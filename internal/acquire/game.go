@@ -24,8 +24,8 @@ func NewGame(inputInterface IInput) *Game {
 	}
 
 	game.Players = []*Player{
-		NewPlayer(game, "You", aiAgentFactory),
-		NewPlayer(game, "Greg", aiAgentFactory),
+		NewPlayer(game, "You", aiAgentStupidFactory),
+		NewPlayer(game, "Greg", aiAgentStupidFactory),
 	}
 
 	inventory := newInventory(game, 1e6)
