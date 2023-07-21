@@ -1,5 +1,19 @@
 package util
 
+func RemoveAt[T comparable](slice []T, idx int) []T {
+	if slice == nil {
+		return slice
+	}
+
+	if len(slice) == 0 {
+		return slice
+	}
+
+	slice = append(slice[:idx], slice[idx+1:]...)
+
+	return slice
+}
+
 func IndexOf[T comparable](slice []T, val T) (int, bool) {
 	if slice == nil {
 		return 0, false
@@ -54,6 +68,18 @@ func Filter[T comparable](slice []T, filter func(val T) bool) []T {
 	return result
 }
 
+func Find[T comparable](slice []T, filter func(val T) bool) (int, T) {
+	var z T
+
+	for idx, item := range slice {
+		if filter(item) {
+			return idx, item
+		}
+	}
+
+	return -1, z
+}
+
 func Any[T comparable](slice []T, filter func(val T) bool) bool {
 	for _, item := range slice {
 		if filter(item) {
@@ -68,4 +94,19 @@ func Clone[T comparable](slice []T) []T {
 	clone := make([]T, len(slice))
 	copy(clone, slice)
 	return clone
+}
+
+func Pop[T comparable](slice []T) (T, []T) {
+	var val T
+
+	if slice == nil {
+		return val, nil
+	}
+
+	if len(slice) == 0 {
+		return val, slice
+	}
+
+	val, slice = slice[0], slice[1:]
+	return val, slice
 }

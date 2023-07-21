@@ -4,10 +4,19 @@ import (
 	"acquire/internal/util"
 	"fmt"
 	"os"
-	"sort"
 )
 
 type Game struct {
+	MergerState *MergerState
+	FoundState  FoundState
+
+	// once set, at the end of the turn, the game ends
+	WillEnd bool
+
+	NextActionType ActionType
+
+	LastPlacedTile Tile
+
 	IsOver         bool
 	Turn           int
 	Players        []*Player
@@ -24,8 +33,10 @@ func NewGame(inputInterface IInput) *Game {
 	}
 
 	game.Players = []*Player{
-		NewPlayer(game, "You", aiAgentStupidFactory),
-		NewPlayer(game, "Greg", aiAgentStupidFactory),
+		NewPlayer(game, 0, "You", aiAgentStupidFactory),
+		NewPlayer(game, 1, "Jef", aiAgentStupidFactory),
+		NewPlayer(game, 2, "Jame", aiAgentStupidFactory),
+		NewPlayer(game, 3, "Eric", aiAgentStupidFactory),
 	}
 
 	inventory := newInventory(game, 1e6)
@@ -60,67 +71,6 @@ func (game *Game) CurrentPlayer() *Player {
 	return game.Players[game.playerTurn(0)]
 }
 
-func (game *Game) Step() {
-
-	if game.IsOver {
-		return
-	}
-
-	player := game.CurrentPlayer()
-
-	// just place the first tile for each other player for testing
-	tile, err := player.agent.DetermineTilePlacement()
-
-	// if the tile is NoTile, skip their turn
-	if tile == NoTile {
-		if !game.areThereAnyLegalMoves() {
-			game.end("there are no remaining legal moves in the game")
-			return
-		}
-		game.Turn++
-		return
-	}
-
-	if err != nil {
-		game.abort(err.Error())
-	}
-
-	player.placeTile(tile)
-
-	if reason, ok := game.canEnd(); ok {
-		end, err := player.agent.DetermineGameEnd()
-		if err != nil {
-			game.abort(err.Error())
-		}
-
-		if end {
-			game.end("game has been declared over, " + reason)
-			return
-		}
-	}
-
-	// buy stocks at this point
-	hotel, n, err := player.agent.DetermineStockPurchase()
-	if err != nil {
-		panic(err)
-	}
-
-	if isActualHotelChain(hotel) {
-		err = player.buyStock(hotel, n)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	if len(player.Inventory.Tiles.Items) < 6 {
-		// take a new tile from the bank
-		// ignoring the error, if there weren't any tiles left to take
-		_ = player.Inventory.Tiles.take(game.Inventory.Tiles)
-	}
-
-	game.Turn++
-}
-
 func (game *Game) abort(reason string) {
 	fmt.Println("Game aborted: " + reason)
 	os.Exit(1)
@@ -145,26 +95,15 @@ func (game *Game) end(reason string) {
 			}
 		}
 	}
-
-	sortedPlayers := make([]*Player, len(game.Players))
-	copy(sortedPlayers, game.Players)
-	sort.Slice(sortedPlayers, func(i, j int) bool {
-		return sortedPlayers[i].Inventory.Money > sortedPlayers[j].Inventory.Money
-	})
-
-	sendMsg(game, "Game over: "+reason)
-
-	// send winners
-	sendMsg(game, "Result")
-	for i, p := range sortedPlayers {
-		sendMsg(game, fmt.Sprintf("%d: %s with $%d", i+1, p.Name(), p.Inventory.Money))
-	}
-
 }
 
 // canEnd
 // returns true if it's possible for a player to 'declare' the game over
 func (game *Game) canEnd() (string, bool) {
+
+	if len(game.Inventory.Tiles.Items) < 1 {
+		return "no tiles left somehow", true
+	}
 
 	// if there are any chains larger than 40, the game can end
 	sizes := countHotelChains(game, HotelChainList)
@@ -178,12 +117,15 @@ func (game *Game) canEnd() (string, bool) {
 
 	// if there are no remaining unsafe (from merger) hotels, the game can end
 	sizes = countHotelChains(game, getActiveHotelChains(game))
-	anyUnsafe := util.AnyInMap(sizes, func(key Hotel, val int) bool {
-		return val <= 10
-	})
 
-	if !anyUnsafe {
-		return "all chains on the board are safe", true
+	if len(sizes) > 1 {
+		anyUnsafe := util.AnyInMap(sizes, func(key Hotel, val int) bool {
+			return val <= 10
+		})
+
+		if !anyUnsafe {
+			return "all chains on the board are safe", true
+		}
 	}
 
 	return "", false
@@ -239,13 +181,13 @@ func (game *Game) remainingStocks() map[Stock]int {
 }
 
 func (game *Game) purchasableStocks() map[Stock]int {
-	availableChains := getAvailableHotelChains(game)
+	availableChains := getActiveHotelChains(game)
 	stocks := game.remainingStocks()
 
 	// if a hotel is not yet placed on the board
-	// it cannot be bought, so the stock amount would be zero
+	// it cannot be bought, so remove it from contention
 	for _, hotel := range availableChains {
-		stocks[Stock(hotel)] = 0
+		delete(stocks, Stock(hotel))
 	}
 
 	return stocks
@@ -271,9 +213,6 @@ func (game *Game) payShareholderBonuses(hotel Hotel) {
 
 	majShareholder.Inventory.takeMoney(game.Inventory, majBonus)
 	minorShareholder.Inventory.takeMoney(game.Inventory, minBonus)
-
-	sendMsg(game, fmt.Sprintf("%s got a major shareholder bonus of $%d", majShareholder.PlayerName, majBonus))
-	sendMsg(game, fmt.Sprintf("%s got a minor shareholder bonus of $%d", minorShareholder.PlayerName, minBonus))
 }
 
 // everyRemainingTile

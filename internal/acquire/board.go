@@ -20,6 +20,12 @@ func newBoard() *Board {
 	}
 }
 
+func (b *Board) clone() *Board {
+	return &Board{
+		Matrix: b.Matrix.Copy(),
+	}
+}
+
 func ValidPlacementPositions(game *Game) []util.Point[int] {
 	positions := util.Map(game.CurrentPlayer().legalMoves(), func(val Tile) util.Point[int] {
 		return val.Pos()

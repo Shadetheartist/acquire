@@ -8,58 +8,41 @@ import (
 	"sort"
 )
 
-/* player turn
-
-1: play a tile onto the board
-2: buy up to 3 stocks
-3: draw a new random tile
-
---
-
-when a tile is placed it can have one of these effects
-
-- found a new hotel chain
-- grow a hotel chain
-- merge 2 or more hotel chains
-- no effect (first tile, no connections)
-
---
-
-once a tile is placed next to another tile that isn't already part of a hotel chain,
-a new chain is created (player's choice)
-
-you get 1 free stock in the chain for founding it ( if available )
-
-if there are no more hotels left to found, you cannot play a tile to which would found a new one
-
-
---
-
-when you place a tile next to an existing hotel chain, that hotel chain grows.
-
-if the new tile is touching two or more hotel chains, a 'merger' takes place. The bigger hotel chain acquires the smaller one.
-In a tie of hotel size, the player decides which hotel is acquired
-During the merger, the tile you place does not count toward the size of either hotel.
-
-As part of the merger, each player counts their stocks to determine the majority and minority shareholders
-if tied, add the bonuses together and split them evenly, rounded to the nearest 100
-
-
-*/
-
 type Player struct {
+	Id         int
 	PlayerName string
 	agent      IAgent
 	game       *Game
 	Inventory  *Inventory
 }
 
+func (p *Player) clone() *Player {
+	clone := &Player{
+		// will copy naturally
+		Id:         p.Id,
+		PlayerName: p.PlayerName,
+
+		// needs to be cloned
+		Inventory: p.Inventory.clone(),
+
+		// these don't contribute to state
+		game:  p.game,
+		agent: p.agent,
+	}
+
+	// update refs
+	clone.Inventory.Owner = clone
+
+	return clone
+}
+
 func (p *Player) Name() string {
 	return p.PlayerName
 }
 
-func NewPlayer(game *Game, name string, agentFactoryFn func(player *Player) IAgent) *Player {
+func NewPlayer(game *Game, id int, name string, agentFactoryFn func(player *Player) IAgent) *Player {
 	player := &Player{
+		Id:         id,
 		PlayerName: name,
 		game:       game,
 	}
@@ -389,18 +372,22 @@ func getChainsInNeighbors(neighbors []PlacedHotel) []Hotel {
 }
 
 // getActiveHotelChains
-// gets the active hotels, which are not on the board
+// gets the active hotels, which are on the board
 // this is pretty brutally inefficient but whatever
 func getActiveHotelChains(game *Game) []Hotel {
-	chains := make([]Hotel, 0)
+	chainsMap := make(map[Hotel]struct{}, 0)
 
 	game.Board.Matrix.Iterate(func(rt PlacedHotel, x int, y int, idx int) {
-		chains = append(chains, rt.Hotel)
+		if rt.Hotel != NoHotel && rt.Hotel != UndefinedHotel {
+			chainsMap[rt.Hotel] = struct{}{}
+		}
 	})
 
-	sortHotels(chains)
+	chainsSlice := util.Keys(chainsMap)
 
-	return chains
+	sortHotels(chainsSlice)
+
+	return chainsSlice
 }
 
 // getActiveHotelChains

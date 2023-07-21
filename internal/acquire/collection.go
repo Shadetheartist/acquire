@@ -18,6 +18,13 @@ func newCollection[T comparable]() *Collection[T] {
 	}
 }
 
+func (c *Collection[T]) clone() *Collection[T] {
+	return &Collection[T]{
+		// must be cloned (but can't know if we need to clone deeper automatically)
+		Items: util.Clone(c.Items),
+	}
+}
+
 func (c *Collection[T]) add(n int, ctor func() T) {
 	for i := 0; i < n; i++ {
 		c.Items = append(c.Items, ctor())

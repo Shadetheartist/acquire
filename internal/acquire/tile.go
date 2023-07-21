@@ -15,6 +15,7 @@ func (t Tile) String() string {
 }
 
 func (t Tile) Pos() util.Point[int] {
+	// this could be a lookup table if performance is really that bad
 	x, y, err := parseTileIntoCoords(string(t))
 	if err != nil {
 		panic(err)

@@ -26,6 +26,28 @@ func newInventory(owner INamed, money int) *Inventory {
 	}
 }
 
+func (inv *Inventory) clone() *Inventory {
+	clonedStocks := func() map[Hotel]*Collection[Stock] {
+		clone := make(map[Hotel]*Collection[Stock])
+		for k, collection := range inv.Stocks {
+			clone[k] = collection.clone()
+		}
+		return clone
+	}
+
+	return &Inventory{
+		// will copy naturally
+		Money: inv.Money,
+
+		// this doesn't contribute to state
+		Owner: inv.Owner,
+
+		//needs to be cloned
+		Tiles:  inv.Tiles.clone(),
+		Stocks: clonedStocks(),
+	}
+}
+
 // takeMoney
 // takes money from another inventory, if they don't have enough, it takes as much as it can
 // this function returns the amount of money actually taken
