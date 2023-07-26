@@ -87,16 +87,16 @@ func (game *Game) getLargestChainsOf(hotels []Hotel) ([]Hotel, int) {
 	return largestChains, sizes[0].count
 }
 
-func (c *Computed) computeLegalMoves(game *Game) []Tile {
-	playableTiles := make([]Tile, 0, len(game.CurrentPlayer().Tiles))
+func (c *Computed) computeLegalMoves(game *Game) {
+	legalMoves := make([]Tile, 0, len(game.CurrentPlayer().Tiles))
 
 	for _, t := range game.CurrentPlayer().Tiles {
 		if c.isLegalToPlace(game, t) {
-			playableTiles = append(playableTiles, t)
+			legalMoves = append(legalMoves, t)
 		}
 	}
 
-	return playableTiles
+	c.LegalMoves = legalMoves
 }
 
 func (c *Computed) isLegalToPlace(game *Game, tile Tile) bool {
@@ -114,7 +114,7 @@ func (c *Computed) isLegalToPlace(game *Game, tile Tile) bool {
 		// if any two neighbors are size > 10, then the placement isn't legal
 		numSafe := 0
 		for _, hotel := range chainsInNeighbors {
-			size := game.ChainSize[hotel]
+			size := game.ChainSize[hotel.Index()]
 			if size > 11 {
 				numSafe += 1
 			}

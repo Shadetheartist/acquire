@@ -22,9 +22,8 @@ func (game *Game) getFoundHotelActions() []gmcts.Action {
 func (game *Game) applyPickHotelToFoundAction(action Action_PickHotelToFound) {
 
 	tile := game.LastPlacedTile
-	newPlacedHotel := PlacedHotel{Tile: tile, Hotel: action.Hotel}
-	game.Board[tile] = newPlacedHotel
 
+	newPlacedHotel := game.placeTileOnBoard(tile, action.Hotel)
 	propagateHotelChain(game, newPlacedHotel)
 
 	err := game.CurrentPlayer().takeStockFromBank(game, action.Hotel, 1)

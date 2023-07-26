@@ -150,7 +150,7 @@ func (game *Game) getShareholders(s Stock) (*Player, int, *Player, int) {
 
 	for _, p := range game.Players {
 		h := Hotel(s)
-		numShares := p.Stocks[h]
+		numShares := p.Stocks[h.Index()]
 		if numShares > majorShareholderShares {
 			majorShareholder = &p
 			majorShareholderShares = numShares
@@ -185,4 +185,16 @@ func (game *Game) PlacementAtPos(pt util.Point[int]) PlacedHotel {
 	idx := index(pt.X, pt.Y)
 
 	return game.Board[idx]
+}
+
+func (game *Game) placeTileOnBoard(tile Tile, hotel Hotel) PlacedHotel {
+	newPlacedHotel := PlacedHotel{Tile: tile, Hotel: hotel}
+	game.Board[tile.Index()] = newPlacedHotel
+	game.LastPlacedTile = tile
+
+	if hotel != NoHotel && hotel != UndefinedHotel {
+		game.ChainSize[hotel.Index()]++
+	}
+
+	return newPlacedHotel
 }

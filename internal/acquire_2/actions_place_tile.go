@@ -55,12 +55,9 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 
 	pos := tile.Pos()
 
-	newPlacedHotel := PlacedHotel{Tile: tile, Hotel: UndefinedHotel}
-	game.Board[tile] = newPlacedHotel
-
-	game.LastPlacedTile = tile
-
 	neighboringHotels := getNeighbors(game, pos)
+
+	game.placeTileOnBoard(tile, UndefinedHotel)
 
 	// no neighbors - no effects, go to next player's turn
 	if !hasNeighboringHotel(neighboringHotels) {
@@ -72,9 +69,7 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 	chainsInNeighbors := getChainsInNeighbors(neighboringHotels)
 	if len(chainsInNeighbors) == 1 {
 		hotel := chainsInNeighbors[0]
-		newPlacedHotel := PlacedHotel{Tile: tile, Hotel: hotel}
-		game.Board[tile] = newPlacedHotel
-		propagateHotelChain(game, newPlacedHotel)
+		game.placeTileOnBoard(tile, hotel)
 
 		goNext()
 		return
@@ -91,14 +86,6 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 			AcquiringHotel:   largestChains[0], //select the largest chain by default
 		}
 
-		// more than one chain is tied for largest, player needs to decide which chain is acquired
-		if len(largestChains) > 1 {
-			game.NextActionType = ActionType_PickHotelToMerge
-			return
-		}
-
-		// otherwise...
-
 		// prepare the 'chains to merge' array
 		for _, h := range HotelChainList {
 			// ok = this hotel is in the 'largest chains' slice, but isn't the largest chain
@@ -107,6 +94,14 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 				game.MergerState.ChainsToMerge[h.Index()] = len(game.Players)
 			}
 		}
+
+		// more than one chain is tied for largest, player needs to decide which chain is acquired
+		if len(largestChains) > 1 {
+			game.NextActionType = ActionType_PickHotelToMerge
+			return
+		}
+
+		// otherwise...
 
 		game.NextActionType = ActionType_Merge
 

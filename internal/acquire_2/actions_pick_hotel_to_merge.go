@@ -23,7 +23,7 @@ func (game *Game) applyPickHotelToMergeAction(action Action_PickHotelToMerge) {
 	game.MergerState.AcquiringHotel = action.Hotel
 
 	// remove the acquiring hotel chain from the list to merge (by setting it to zero)
-	game.MergerState.ChainsToMerge[action.Hotel] = 0
+	game.MergerState.ChainsToMerge[action.Hotel.Index()] = 0
 
 	game.NextActionType = ActionType_Merge
 }

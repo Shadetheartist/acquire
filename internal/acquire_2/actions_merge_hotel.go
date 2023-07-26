@@ -52,19 +52,20 @@ func getNextChainToMerge(mergerState *MergerState) (Hotel, error) {
 
 func (game *Game) applyMergeHotel(action Action_Merge) {
 
-	state := game.MergerState
-
 	hotelToMerge, err := getNextChainToMerge(&game.MergerState)
 	if err != nil {
 		panic(err)
 	}
 
-	player := game.Players[state.MergingPlayerIdx]
+	player := game.Players[game.MergerState.MergingPlayerIdx]
 
 	game.payShareholderBonuses(hotelToMerge)
 
 	goNext := func() {
-		state.ChainsToMerge[hotelToMerge] -= 1
+		game.MergerState.MergingPlayerIdx += 1
+		game.MergerState.MergingPlayerIdx = game.MergerState.MergingPlayerIdx % len(game.Players)
+
+		game.MergerState.ChainsToMerge[hotelToMerge.Index()] -= 1
 
 		// err wil be set if there are no more chains to merge
 		_, err := getNextChainToMerge(&game.MergerState)
@@ -72,8 +73,7 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 		// if there's no more chains to process, we're done merging
 		if err != nil {
 			// finally place the piece and propagate the chain
-			newPlacedHotel := PlacedHotel{Tile: game.LastPlacedTile, Hotel: state.AcquiringHotel}
-			game.Board[game.LastPlacedTile] = newPlacedHotel
+			newPlacedHotel := game.placeTileOnBoard(game.LastPlacedTile, game.MergerState.AcquiringHotel)
 			propagateHotelChain(game, newPlacedHotel)
 
 			game.NextActionType = ActionType_PurchaseStock
@@ -91,14 +91,14 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 			return
 
 		case Trade:
-			err := player.tradeIn(game, state.AcquiredHotel, state.AcquiringHotel, subAction.Amount)
+			err := player.tradeIn(game, game.MergerState.AcquiredHotel, game.MergerState.AcquiringHotel, subAction.Amount)
 			if err != nil {
 				panic(err)
 			}
 			break
 
 		case Sell:
-			err := player.sellStock(game, Stock(state.AcquiredHotel), subAction.Amount)
+			err := player.sellStock(game, Stock(game.MergerState.AcquiredHotel), subAction.Amount)
 			if err != nil {
 				panic(err)
 			}

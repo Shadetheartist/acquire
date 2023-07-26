@@ -22,6 +22,14 @@ type IAction interface {
 	Type() ActionType
 }
 
+func asType[T any](action any) T {
+	_action, ok := action.(T)
+	if !ok {
+		panic("action not of correct type")
+	}
+	return _action
+}
+
 func (game *Game) ApplyAction(gmctsAction gmcts.Action) (gmcts.Game, error) {
 
 	gameStruct := *game
@@ -31,21 +39,21 @@ func (game *Game) ApplyAction(gmctsAction gmcts.Action) (gmcts.Game, error) {
 	if !ok {
 		panic("action type was not convertable to IAction")
 	}
+
 	switch action.Type() {
 	case ActionType_PlaceTile:
-		clone.applyPlaceTileAction(action.(Action_PlaceTile))
-		break
+		clone.applyPlaceTileAction(asType[Action_PlaceTile](action))
 	case ActionType_PickHotelToFound:
-		clone.applyPickHotelToFoundAction(action.(Action_PickHotelToFound))
+		clone.applyPickHotelToFoundAction(asType[Action_PickHotelToFound](action))
 		break
 	case ActionType_PickHotelToMerge:
-		clone.applyPickHotelToMergeAction(action.(Action_PickHotelToMerge))
+		clone.applyPickHotelToMergeAction(asType[Action_PickHotelToMerge](action))
 		break
 	case ActionType_Merge:
-		clone.applyMergeHotel(action.(Action_Merge))
+		clone.applyMergeHotel(asType[Action_Merge](action))
 		break
 	case ActionType_PurchaseStock:
-		clone.applyPurchaseStockAction(action.(Action_PurchaseStock))
+		clone.applyPurchaseStockAction(asType[Action_PurchaseStock](action))
 		break
 	default:
 		panic(fmt.Sprintf("action %d is not handled", action))

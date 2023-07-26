@@ -108,7 +108,7 @@ func (player *Player) canTradeIn(game *Game, in Hotel, out Hotel, tradeInAmount 
 		return nil
 	}
 
-	outRemaining := game.Stocks[out]
+	outRemaining := game.Stocks[out.Index()]
 
 	if outRemaining < returnAmount {
 		return errors.New("there is not enough stock to trade-in for")
@@ -155,7 +155,7 @@ func (player *Player) sellStock(game *Game, stock Stock, amount int) error {
 		panic("shouldn't take more than there are")
 	}
 
-	chainSize := game.ChainSize[hotel]
+	chainSize := game.ChainSize[hotel.Index()]
 	value := sharesCalc(hotel, chainSize, amount)
 
 	player.Money += value
@@ -165,7 +165,7 @@ func (player *Player) sellStock(game *Game, stock Stock, amount int) error {
 
 func (player *Player) buyStock(game *Game, hotel Hotel, amount int) error {
 
-	chainSize := game.ChainSize[hotel]
+	chainSize := game.ChainSize[hotel.Index()]
 
 	if chainSize == 0 {
 		return errors.New("chain does not exist at the moment")
@@ -178,7 +178,7 @@ func (player *Player) buyStock(game *Game, hotel Hotel, amount int) error {
 		return err
 	}
 
-	amountAvailable := game.Stocks[hotel]
+	amountAvailable := game.Stocks[hotel.Index()]
 	if amountAvailable < amount {
 		return fmt.Errorf("can't buy %d stocks in %s, there's only %d remaining", amount, hotel.String(), amountAvailable)
 	}

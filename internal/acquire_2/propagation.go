@@ -37,7 +37,7 @@ func propagateHotelChain(game *Game, rootHotel PlacedHotel) {
 			continue
 		}
 
-		game.Board[placedHotel.Tile] = PlacedHotel{
+		game.Board[placedHotel.Tile.Index()] = PlacedHotel{
 			Hotel: rootHotel.Hotel,
 			Tile:  placedHotel.Tile,
 		}
@@ -66,7 +66,7 @@ func isInBounds(x int, y int) bool {
 }
 
 func index(x int, y int) int {
-	return (y * BOARD_MAX_Y) + x
+	return (y * BOARD_MAX_X) + x
 }
 
 func getNeighbors(game *Game, pt util.Point[int]) []PlacedHotel {

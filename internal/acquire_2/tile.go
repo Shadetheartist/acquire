@@ -27,6 +27,10 @@ func (t Tile) Index() int {
 	return int(t - 1)
 }
 
+func TileFromBoardIdx(idx int) Tile {
+	return Tile(idx + 1)
+}
+
 func (t Tile) Pos() util.Point[int] {
 	idx := t.Index()
 	return util.Point[int]{
