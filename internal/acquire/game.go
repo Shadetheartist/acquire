@@ -17,26 +17,24 @@ type Game struct {
 
 	LastPlacedTile Tile
 
-	IsOver         bool
-	Turn           int
-	Players        []*Player
-	Board          *Board
-	Inventory      *Inventory
-	inputInterface IInput
+	IsOver    bool
+	Turn      int
+	Players   []*Player
+	Board     *Board
+	Inventory *Inventory
 }
 
-func NewGame(inputInterface IInput) *Game {
+func NewGame() *Game {
 
 	game := &Game{
-		inputInterface: inputInterface,
-		Board:          newBoard(),
+		Board: newBoard(),
 	}
 
 	game.Players = []*Player{
-		NewPlayer(game, 0, "You", aiAgentStupidFactory),
-		NewPlayer(game, 1, "Jef", aiAgentStupidFactory),
-		NewPlayer(game, 2, "Jame", aiAgentStupidFactory),
-		NewPlayer(game, 3, "Eric", aiAgentStupidFactory),
+		NewPlayer(game, 1, "You"),
+		NewPlayer(game, 2, "Jef"),
+		NewPlayer(game, 3, "Jame"),
+		NewPlayer(game, 4, "Eric"),
 	}
 
 	inventory := newInventory(game, 1e6)
@@ -71,7 +69,7 @@ func (game *Game) CurrentPlayer() *Player {
 	return game.Players[game.playerTurn(0)]
 }
 
-func (game *Game) abort(reason string) {
+func (game *Game) Abort(reason string) {
 	fmt.Println("Game aborted: " + reason)
 	os.Exit(1)
 }

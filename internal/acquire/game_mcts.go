@@ -45,7 +45,7 @@ func (game *Game) GetActions() []gmcts.Action {
 		return actions
 
 	case ActionType_PickHotelToFound:
-		return util.Map(getAvailableHotelChains(game), func(val Hotel) gmcts.Action {
+		return util.Map(GetAvailableHotelChains(game), func(val Hotel) gmcts.Action {
 			return Action_PickHotelToFound{Hotel: val}
 		})
 
@@ -153,9 +153,6 @@ func (game *Game) clone() *Game {
 		Board:       game.Board.clone(),
 		Inventory:   game.Inventory.clone(),
 		MergerState: nil,
-
-		// doesn't contribute to state
-		inputInterface: game.inputInterface,
 	}
 
 	clone.Inventory.Owner = clone
@@ -164,7 +161,7 @@ func (game *Game) clone() *Game {
 		clonedPlayers := make([]*Player, len(game.Players))
 		for i, p := range game.Players {
 			clonedPlayer := p.clone()
-			clonedPlayer.game = clone
+			clonedPlayer.Game = clone
 			clonedPlayers[i] = clonedPlayer
 		}
 		return clonedPlayers

@@ -112,7 +112,7 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 
 	player.Inventory.Tiles.remove(tile)
 	pos := tile.Pos()
-	matrix := player.game.Board.Matrix
+	matrix := player.Game.Board.Matrix
 	matrix.Set(pos.X, pos.Y, PlacedHotel{Pos: pos, Hotel: UndefinedHotel})
 	game.LastPlacedTile = tile
 
@@ -133,7 +133,7 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 		newPlacedHotel := PlacedHotel{Pos: pos, Hotel: hotel}
 		matrix.Set(pos.X, pos.Y, newPlacedHotel)
 
-		propagateHotelChain(player.game, newPlacedHotel)
+		propagateHotelChain(player.Game, newPlacedHotel)
 
 		goNext()
 		return
@@ -142,10 +142,10 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 	// merger - if there are more than two chains in the neighboring tiles, a merger must take place
 	if len(chainsInNeighbors) > 1 {
 
-		largestChains, _ := getLargestChainsOf(player.game, chainsInNeighbors)
+		largestChains, _ := getLargestChainsOf(player.Game, chainsInNeighbors)
 
 		// count the hotel chains *before* the tile is placed for accurate stock purchasing
-		chainSizeMap := countHotelChains(player.game, chainsInNeighbors)
+		chainSizeMap := countHotelChains(player.Game, chainsInNeighbors)
 
 		// in order of largest to smallest
 		sortedHotelChains := sortChainSizeMap(chainSizeMap)

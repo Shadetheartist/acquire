@@ -11,8 +11,7 @@ import (
 type Player struct {
 	Id         int
 	PlayerName string
-	agent      IAgent
-	game       *Game
+	Game       *Game
 	Inventory  *Inventory
 }
 
@@ -26,8 +25,7 @@ func (p *Player) clone() *Player {
 		Inventory: p.Inventory.clone(),
 
 		// these don't contribute to state
-		game:  p.game,
-		agent: p.agent,
+		Game: p.Game,
 	}
 
 	// update refs
@@ -40,14 +38,12 @@ func (p *Player) Name() string {
 	return p.PlayerName
 }
 
-func NewPlayer(game *Game, id int, name string, agentFactoryFn func(player *Player) IAgent) *Player {
+func NewPlayer(game *Game, id int, name string) *Player {
 	player := &Player{
 		Id:         id,
 		PlayerName: name,
-		game:       game,
+		Game:       game,
 	}
-
-	player.agent = agentFactoryFn(player)
 
 	player.Inventory = newInventory(player, 0)
 
@@ -59,7 +55,7 @@ func (p *Player) pay(amount int) error {
 		return fmt.Errorf("player '%s' cannot afford to pay $%d", p.PlayerName, amount)
 	}
 
-	p.game.Inventory.takeMoney(p.Inventory, amount)
+	p.Game.Inventory.takeMoney(p.Inventory, amount)
 
 	return nil
 }
@@ -70,7 +66,7 @@ func (p *Player) buyStock(hotel Hotel, amount int) error {
 		panic("trying to buy a non-chain hotel")
 	}
 
-	chainSize := countHotelChain(p.game, hotel)
+	chainSize := countHotelChain(p.Game, hotel)
 
 	if chainSize == 0 {
 		return errors.New("chain does not exist yet")
@@ -83,14 +79,14 @@ func (p *Player) buyStock(hotel Hotel, amount int) error {
 		return err
 	}
 
-	amountAvailable := len(p.game.Inventory.Stocks[hotel].Items)
+	amountAvailable := len(p.Game.Inventory.Stocks[hotel].Items)
 	if amountAvailable < amount {
 		return fmt.Errorf("can't buy %d stocks in %s, there's only %d remaining", amount, hotel.String(), amountAvailable)
 	}
 
 	amountTaken := 0
 	for i := 0; i < amount; i++ {
-		err := p.Inventory.Stocks[hotel].take(p.game.Inventory.Stocks[hotel])
+		err := p.Inventory.Stocks[hotel].take(p.Game.Inventory.Stocks[hotel])
 		if err != nil {
 			return err
 		}
@@ -98,153 +94,6 @@ func (p *Player) buyStock(hotel Hotel, amount int) error {
 	}
 
 	return nil
-}
-
-func (p *Player) placeTile(tile Tile) {
-
-	// move the tile from the player's inventory to the board
-	p.Inventory.Tiles.remove(tile)
-	pos := tile.Pos()
-	matrix := p.game.Board.Matrix
-	matrix.Set(pos.X, pos.Y, PlacedHotel{Pos: pos, Hotel: UndefinedHotel})
-
-	neighboringHotels := matrix.GetNeighbors(pos)
-
-	// no effect occurs when there are no adjacent tiles to the placed tile
-	// so check if that's the case and early exit
-
-	// no neighbors - no effect
-	if !hasNeighboringHotel(neighboringHotels) {
-		return
-	}
-
-	// growing a chain - occurs when, of all neighbors, there is only one type of hotel
-	chainsInNeighbors := getChainsInNeighbors(neighboringHotels)
-
-	if len(chainsInNeighbors) == 1 {
-		hotel := chainsInNeighbors[0]
-		newPlacedHotel := PlacedHotel{Pos: pos, Hotel: hotel}
-		matrix.Set(pos.X, pos.Y, newPlacedHotel)
-
-		propagateHotelChain(p.game, newPlacedHotel)
-
-		// only one effect can occur per placement
-		return
-	}
-
-	// merger - if there are more than two chains in the neighboring tiles, a merger must take place
-	if len(chainsInNeighbors) > 1 {
-
-		largestChains, _ := getLargestChainsOf(p.game, chainsInNeighbors)
-
-		acquiringHotel := largestChains[0]
-		var err error
-		if len(largestChains) > 1 {
-			acquiringHotel, err = p.agent.DetermineHotelToMerge(largestChains)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		// count the hotel chains *before* the tile is placed for accurate stock purchasing
-		chainSizeMap := countHotelChains(p.game, chainsInNeighbors)
-
-		// in order of largest to smallest
-		sorted := sortChainSizeMap(chainSizeMap)
-
-		// pay-out shareholders, replace hotel chain (implicit, as this is always calculated at runtime)
-		for _, chain := range sorted {
-
-			acquiredHotel := chain.Hotel
-
-			// don't sell the take-over hotel lol
-			if acquiredHotel == acquiringHotel {
-				continue
-			}
-
-			p.game.payShareholderBonuses(acquiredHotel)
-
-			// players, in order starting with the current player,
-			// decide to hold, trade, or sell stocks in the acquired chains
-			players := p.game.playersInTurnOrder()
-			for _, p := range players {
-				action, err := p.agent.DetermineMergerAction(acquiredHotel)
-				if err != nil {
-					panic(err)
-				}
-
-				switch action {
-				case Hold:
-					break
-				case Trade:
-					amount, err := p.agent.DetermineTradeInAmount(acquiredHotel, acquiringHotel)
-					if err != nil {
-						panic(err)
-					}
-
-					err = p.tradeIn(Stock(acquiredHotel), Stock(acquiringHotel), amount)
-					if err != nil {
-						panic(err)
-					}
-					break
-
-				case Sell:
-					amount, err := p.agent.DetermineStockSellAmount(acquiredHotel)
-					if err != nil {
-						panic(err)
-					}
-
-					err = p.sellStock(Stock(acquiredHotel), amount)
-					if err != nil {
-						panic(err)
-					}
-				}
-			}
-
-			stockHotel, amount, err := p.agent.DetermineStockPurchase()
-			if err != nil {
-				panic(err)
-			}
-
-			if stockHotel > 0 && amount > 0 {
-				err := p.buyStock(stockHotel, amount)
-				if err != nil {
-					panic(err)
-				}
-			}
-		}
-
-		newPlacedHotel := PlacedHotel{Pos: pos, Hotel: acquiringHotel}
-		matrix.Set(pos.X, pos.Y, newPlacedHotel)
-
-		// needs to propagate
-		propagateHotelChain(p.game, newPlacedHotel)
-
-		// only one effect can occur per placement
-		return
-	}
-
-	// found a new chain - occurs when a tile has one or more neighbors which are all still undefined
-	undefinedNeighbors := getUndefinedNeighbors(neighboringHotels)
-	if len(undefinedNeighbors) > 0 {
-		hotel, err := p.agent.DetermineHotelToFound()
-		if err != nil {
-			panic(err)
-		}
-		newPlacedHotel := PlacedHotel{Pos: pos, Hotel: hotel}
-		matrix.Set(pos.X, pos.Y, newPlacedHotel)
-
-		// miniature propagation of the hotel chain, these will never propagate beyond the orthogonal neighbors
-		propagateHotelChain(p.game, newPlacedHotel)
-
-		// receive a free stock in the chain for founding it
-		_ = p.Inventory.Stocks[hotel].take(p.game.Inventory.Stocks[hotel])
-
-		// only one effect can occur per placement
-		return
-	}
-
-	panic("not sure how we got here, all situations should have been accounted for")
 }
 
 // anon func for the return syntax
@@ -259,7 +108,7 @@ func hasNeighboringHotel(neighbors []PlacedHotel) bool {
 
 func (p *Player) legalMoves() []Tile {
 	return util.Filter(p.Inventory.Tiles.Items, func(val Tile) bool {
-		return isLegalToPlace(p.game, val)
+		return isLegalToPlace(p.Game, val)
 	})
 }
 
@@ -268,7 +117,7 @@ func (p *Player) tiles() []Tile {
 }
 
 // returnTile
-// aliasing function for returning a specific tile to the game inventory
+// aliasing function for returning a specific tile to the Game inventory
 func (p *Player) returnTile(t Tile) {
 
 	_, ok := p.Inventory.Tiles.indexOf(t)
@@ -276,14 +125,14 @@ func (p *Player) returnTile(t Tile) {
 		return
 	}
 
-	_ = p.game.Inventory.Tiles.take(p.Inventory.Tiles)
+	_ = p.Game.Inventory.Tiles.take(p.Inventory.Tiles)
 }
 
 // takeTile
-// aliasing function for taking a tile from the game inventory
+// aliasing function for taking a tile from the Game inventory
 // this is normally a blind selection
 func (p *Player) takeTile() {
-	_ = p.Inventory.Tiles.take(p.game.Inventory.Tiles)
+	_ = p.Inventory.Tiles.take(p.Game.Inventory.Tiles)
 }
 
 func (p *Player) takeTiles(other *Inventory, amount int) error {
@@ -299,7 +148,7 @@ func (p *Player) takeTiles(other *Inventory, amount int) error {
 
 // refreshTiles
 // when a player has no legal moves left to play, they can refresh their hand with this func
-// puts all tiles back in the game inv, then takes 6 new ones
+// puts all tiles back in the Game inv, then takes 6 new ones
 func (p *Player) refreshTiles() {
 
 	// clone this so that it isn't getting fucked with as it removes items
@@ -309,7 +158,7 @@ func (p *Player) refreshTiles() {
 	}
 
 	// shuffle the tiles
-	gameTiles := p.game.Inventory.Tiles.Items
+	gameTiles := p.Game.Inventory.Tiles.Items
 	rand.Shuffle(len(gameTiles), func(i, j int) {
 		gameTiles[i], gameTiles[j] = gameTiles[j], gameTiles[i]
 	})
@@ -390,10 +239,10 @@ func getActiveHotelChains(game *Game) []Hotel {
 	return chainsSlice
 }
 
-// getActiveHotelChains
+// GetAvailableHotelChains
 // gets the available hotels, which are not on the board
 // this is pretty brutally inefficient but whatever
-func getAvailableHotelChains(game *Game) []Hotel {
+func GetAvailableHotelChains(game *Game) []Hotel {
 	chains := make(map[Hotel]struct{}, 0)
 
 	for _, h := range HotelChainList {
@@ -446,7 +295,7 @@ func (p *Player) canTradeIn(in Stock, out Stock, tradeInAmount int) error {
 		return nil
 	}
 
-	outRemaining := p.game.remainingStock(out)
+	outRemaining := p.Game.remainingStock(out)
 
 	if outRemaining < returnAmount {
 		return errors.New("there is not enough stock to trade-in for")
@@ -465,10 +314,10 @@ func (p *Player) tradeIn(in Stock, out Stock, tradeInAmount int) error {
 	returnAmount := p.returnedAmount(tradeInAmount)
 
 	// return the stock to the bank
-	_ = p.game.Inventory.takeHotelStock(Hotel(in), tradeInAmount, p.Inventory)
+	_ = p.Game.Inventory.takeHotelStock(Hotel(in), tradeInAmount, p.Inventory)
 
 	// take half the amount of the new stock
-	_ = p.Inventory.takeHotelStock(Hotel(out), returnAmount, p.game.Inventory)
+	_ = p.Inventory.takeHotelStock(Hotel(out), returnAmount, p.Game.Inventory)
 
 	return nil
 }
@@ -488,12 +337,12 @@ func (p *Player) sellStock(stock Stock, amount int) error {
 	}
 
 	hotel := Hotel(stock)
-	err = p.game.Inventory.takeHotelStock(hotel, amount, p.Inventory)
+	err = p.Game.Inventory.takeHotelStock(hotel, amount, p.Inventory)
 	if err != nil {
 		panic("shouldn't take more than there are")
 	}
 
-	chainSize := countHotelChain(p.game, hotel)
+	chainSize := countHotelChain(p.Game, hotel)
 	value := sharesCalc(hotel, chainSize, amount)
 
 	p.Inventory.Money += value

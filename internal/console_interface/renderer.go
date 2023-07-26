@@ -1,7 +1,7 @@
 package console_interface
 
 import (
-	"acquire/internal/acquire"
+	"acquire/internal/acquire_2"
 	"acquire/internal/util"
 	"fmt"
 	"strconv"
@@ -12,10 +12,10 @@ var chars = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i"}
 
 const FILL_SIZE = 3
 
-func Render(game *acquire.Game) {
+func Render(game *acquire_2.Game) {
 	fmt.Print("\033[H\033[2J")
 	fmt.Println()
-	fmt.Println("Acquire | Tiles Left:", len(game.Inventory.Tiles.Items))
+	fmt.Println("Acquire | Tiles Left:", game.NumRemainingTiles())
 	renderPlayers(game)
 	renderPlayerInventories(game)
 	renderBoard(game)
@@ -40,24 +40,24 @@ func rfill(s string, n int) string {
 	return strings.Repeat(" ", l) + s
 }
 
-func renderCurrentPlayer(game *acquire.Game) {
+func renderCurrentPlayer(game *acquire_2.Game) {
 	player := game.CurrentPlayer()
 
 	fmt.Println()
 
 	fmt.Printf(fill("Tiles:", 8))
-	for _, t := range player.Inventory.Tiles.Items {
+	for _, t := range player.Tiles {
 		print(fill(fmt.Sprintf("%s ", t.String()), 4))
 	}
 	fmt.Println()
 
 }
 
-func renderPlayers(game *acquire.Game) {
+func renderPlayers(game *acquire_2.Game) {
 	fmt.Printf(fill("Turn: ", 8))
 	fillSize := 10
 	for _, p := range game.Players {
-		if p == game.CurrentPlayer() {
+		if p.Id == game.CurrentPlayer().Id {
 			print(fill(fmt.Sprintf("[%s] ", p.Name()), fillSize))
 			continue
 		}
@@ -66,33 +66,32 @@ func renderPlayers(game *acquire.Game) {
 	fmt.Println()
 }
 
-func renderPlayerInventories(game *acquire.Game) {
+func renderPlayerInventories(game *acquire_2.Game) {
 	fmt.Println("Inventories:")
 	nameFillSize := 9
 	fillSize := 3
 
 	print(fill(" ", nameFillSize))
 	print(rfill("", nameFillSize))
-	for _, h := range acquire.HotelChainList {
+	for _, h := range acquire_2.HotelChainList {
 		print(fill(h.Initial(), fillSize))
 	}
 	println()
 
 	for _, p := range game.Players {
 		print(rfill(p.Name()+" ", nameFillSize))
-		print(fill(fmt.Sprintf("$%d", p.Inventory.Money), nameFillSize))
-		for _, h := range acquire.HotelChainList {
-			n := len(p.Inventory.Stocks[h].Items)
-			print(fill(strconv.Itoa(n), fillSize))
+		print(fill(fmt.Sprintf("$%d", p.Money), nameFillSize))
+		for h, _ := range acquire_2.HotelChainList {
+			print(fill(strconv.Itoa(p.Stocks[h]), fillSize))
 		}
 		println()
 	}
 	fmt.Println()
 }
 
-func renderBoard(game *acquire.Game) {
+func renderBoard(game *acquire_2.Game) {
 
-	for x := 0; x <= acquire.BOARD_MAX_X; x++ {
+	for x := 0; x <= acquire_2.BOARD_MAX_X; x++ {
 		if x == 0 {
 			print(fill(" ", FILL_SIZE))
 			continue
@@ -101,19 +100,21 @@ func renderBoard(game *acquire.Game) {
 	}
 	println()
 
-	validPlacementPositions := acquire.ValidPlacementPositions(game)
+	validPlacementPositions := util.Map(game.Computed.LegalMoves, func(val acquire_2.Tile) util.Point[int] {
+		return val.Pos()
+	})
 	isValidPlacement := func(x int, y int) bool {
 		_, ok := util.IndexOf(validPlacementPositions, util.Point[int]{X: x, Y: y})
 		return ok
 	}
 
-	for y := 0; y < acquire.BOARD_MAX_Y; y++ {
+	for y := 0; y < acquire_2.BOARD_MAX_Y; y++ {
 		print(chars[y] + strings.Repeat(" ", FILL_SIZE-1))
 
-		for x := 0; x < acquire.BOARD_MAX_X; x++ {
-			placedHotel := game.Board.Matrix.Get(x, y)
+		for x := 0; x < acquire_2.BOARD_MAX_X; x++ {
+			placedHotel := game.PlacementAtPos(util.Point[int]{X: x, Y: y})
 
-			if placedHotel.Hotel == acquire.NoHotel {
+			if placedHotel.Hotel == acquire_2.NoHotel {
 				if isValidPlacement(x, y) {
 					print(fill("\u25CB", FILL_SIZE))
 				} else {
@@ -122,7 +123,7 @@ func renderBoard(game *acquire.Game) {
 				continue
 			}
 
-			if placedHotel.Hotel == acquire.UndefinedHotel {
+			if placedHotel.Hotel == acquire_2.UndefinedHotel {
 				print(fill("\u25A0", FILL_SIZE))
 				continue
 			}

@@ -1,52 +1,34 @@
 package main
 
 import (
-	"acquire/internal/acquire"
+	"acquire/internal/acquire_2"
+	"acquire/internal/ai"
 	"acquire/internal/console_interface"
-	"acquire/internal/util"
-	"fmt"
-	"git.sr.ht/~bonbon/gmcts"
 	"math/rand"
 )
 
 func main() {
 
 	rand.Seed(int64(2))
-	inputInterface := &console_interface.ConsoleInputInterface{}
 
-	game := acquire.NewGame(inputInterface)
+	game := acquire_2.NewGame()
+
+	agents := make(map[int]ai.IAgent)
+	for _, player := range game.Players {
+		agents[player.Id] = ai.NewStupidAgent()
+	}
+	agents[game.Players[0].Id] = ai.NewStupidAgent()
 
 	for !game.IsTerminal() {
-		mcts := gmcts.NewMCTS(game)
 
-		//Spawn a new tree and play 1000 game simulations
-		tree := mcts.SpawnTree()
-		tree.SearchRounds(100)
-
-		//Add the searched tree into the mcts tree collection
-		mcts.AddTree(tree)
-
-		//Get the best action based off of the trees collected from mcts.AddTree()
-		bestAction := mcts.BestAction()
-
-		if bestAction == nil {
-			continue
+		agent := agents[game.CurrentPlayer().Id]
+		actions := game.GetActions()
+		action, err := agent.SelectAction(game, actions)
+		if err != nil {
+			panic(err)
 		}
-
-		//Update the game state using the tree's best action
-		newGame, _ := game.ApplyAction(bestAction)
-		game = newGame.(*acquire.Game)
+		newGame, _ := game.ApplyAction(action)
+		game = newGame.(*acquire_2.Game)
 		console_interface.Render(game)
-
-	}
-
-	console_interface.Render(game)
-
-	for i, p := range game.Winners() {
-		_, ap := util.Find(game.Players, func(val *acquire.Player) bool {
-			return int(p) == val.Id
-		})
-
-		fmt.Printf("%d: %s with $%d\n", i+1, ap.Name(), ap.Inventory.Money)
 	}
 }
