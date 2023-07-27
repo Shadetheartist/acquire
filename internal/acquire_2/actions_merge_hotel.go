@@ -91,14 +91,14 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 			return
 
 		case Trade:
-			err := player.tradeIn(game, game.MergerState.AcquiredHotel, game.MergerState.AcquiringHotel, subAction.Amount)
+			err := player.tradeIn(game, hotelToMerge, game.MergerState.AcquiringHotel, subAction.Amount)
 			if err != nil {
 				panic(err)
 			}
 			break
 
 		case Sell:
-			err := player.sellStock(game, Stock(game.MergerState.AcquiredHotel), subAction.Amount)
+			err := player.sellStock(game, Stock(hotelToMerge), subAction.Amount)
 			if err != nil {
 				panic(err)
 			}

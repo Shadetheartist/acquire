@@ -96,7 +96,7 @@ func (game *Game) end(reason string) {
 	for _, p := range game.Players {
 		for _, hotel := range HotelChainList {
 			stock := Stock(hotel)
-			err := p.sellStock(game, stock, p.Stocks[hotel])
+			err := p.sellStock(game, stock, p.Stocks[hotel.Index()])
 			if err != nil {
 				panic(err)
 			}

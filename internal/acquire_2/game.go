@@ -27,16 +27,16 @@ type MergerState struct {
 	ChainsToMerge    [NUM_CHAINS]int
 	MergingPlayerIdx int
 	AcquiringHotel   Hotel
-	AcquiredHotel    Hotel
 }
 
 type Game struct {
 	Players        [MAX_PLAYERS]Player
 	NextActionType ActionType
 
-	Turn    int
-	IsOver  bool
-	WillEnd bool
+	Turn               int
+	SkippedTurnsInARow int
+	IsOver             bool
+	WillEnd            bool
 
 	LastPlacedTile Tile
 

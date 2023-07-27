@@ -3,10 +3,24 @@ package internal
 import (
 	"acquire/internal/acquire_2"
 	"acquire/internal/ai"
+	"log"
+	"math/rand"
+	"os"
+	"runtime/pprof"
 	"testing"
 )
 
 func Benchmark(b *testing.B) {
+	file, err := os.Create("../profile.prof")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer file.Close()
+	pprof.StartCPUProfile(file)
+	defer pprof.StopCPUProfile()
+
+	rand.Seed(int64(2))
 	for i := 0; i < b.N; i++ {
 		game := acquire_2.NewGame()
 

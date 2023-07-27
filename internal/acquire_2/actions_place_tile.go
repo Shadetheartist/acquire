@@ -18,8 +18,7 @@ func (game *Game) getPlaceTileActions() []gmcts.Action {
 	moves := game.Computed.LegalMoves
 	var skip bool
 	if len(moves) < 1 {
-		// todo: implement removing invalid tiles from hand using old rules
-		skip = true
+		skip = refreshOrSkip(game, game.CurrentPlayer(), 1)
 	}
 
 	actions := util.Map(moves, func(val Tile) gmcts.Action {
@@ -41,9 +40,18 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 
 	// player wants to skip their turn
 	if action.Tile == NoTile {
+		game.SkippedTurnsInARow++
+
+		if game.SkippedTurnsInARow > len(game.Players) {
+			game.end("no one had any moves left to play")
+			return
+		}
+
 		goNext()
 		return
 	}
+
+	game.SkippedTurnsInARow = 0
 
 	player := game.CurrentPlayer()
 	tile := action.Tile
@@ -86,6 +94,12 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 			AcquiringHotel:   largestChains[0], //select the largest chain by default
 		}
 
+		// more than one chain is tied for largest, player needs to decide which chain is acquired
+		if len(largestChains) > 1 {
+			game.NextActionType = ActionType_PickHotelToMerge
+			return
+		}
+
 		// prepare the 'chains to merge' array
 		for _, h := range HotelChainList {
 			// ok = this hotel is in the 'largest chains' slice, but isn't the largest chain
@@ -93,12 +107,6 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 			if ok {
 				game.MergerState.ChainsToMerge[h.Index()] = len(game.Players)
 			}
-		}
-
-		// more than one chain is tied for largest, player needs to decide which chain is acquired
-		if len(largestChains) > 1 {
-			game.NextActionType = ActionType_PickHotelToMerge
-			return
 		}
 
 		// otherwise...
@@ -164,4 +172,20 @@ func getUndefinedNeighbors(neighbors []PlacedHotel) []PlacedHotel {
 	}
 
 	return undefinedNeighbors
+}
+
+// refreshOrSkip
+// this function will refresh the tiles of a player if they have no legal moves repeatedly n times
+// if the player doesn't have a valid move after a refresh then their turn should be skipped
+// (as indicated by true in the returned bool)
+func refreshOrSkip(game *Game, p *Player, n int) bool {
+	for i := 0; i < n; i++ {
+		if len(game.Computed.LegalMoves) < 1 {
+			p.refreshTiles(game)
+		} else {
+			return false
+		}
+	}
+
+	return true
 }

@@ -3,6 +3,7 @@ package acquire_2
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"strconv"
 )
 
@@ -61,6 +62,32 @@ func (player *Player) takeTileFromBank(game *Game) error {
 	}
 
 	return errors.New("player cannot take a tile from the bank, their hand is full")
+}
+
+func (player *Player) returnTileToBank(game *Game, tile Tile) error {
+
+	// look through the bank tiles array until a NoTile slot is found,
+	// this will be where we replace the tile in the array
+	var bankIdx int
+	var bankTile Tile
+	for bankIdx, bankTile = range game.Tiles {
+		if bankTile == NoTile {
+			break
+		}
+	}
+
+	if bankTile != NoTile {
+		return errors.New("player cannot replace a tile into the bank, the bank is full somehow")
+	}
+
+	err := player.removeTileFromHand(tile)
+	if err != nil {
+		return err
+	}
+
+	game.Tiles[bankIdx] = tile
+
+	return nil
 }
 
 func (player *Player) takeStockFromBank(game *Game, chain Hotel, amount int) error {
@@ -136,7 +163,7 @@ func (player *Player) tradeIn(game *Game, in Hotel, out Hotel, tradeInAmount int
 }
 
 func (player *Player) canSellStock(stock Stock, amount int) error {
-	if player.Stocks[stock] < amount {
+	if player.Stocks[Hotel(stock).Index()] < amount {
 		return errors.New("amount sold cannot be greater than the amount the player has")
 	}
 
@@ -199,4 +226,30 @@ func (player *Player) pay(amount int) error {
 	player.Money += amount
 
 	return nil
+}
+
+// refreshTiles
+// when a player has no legal moves left to play, they can refresh their hand with this func
+// puts all tiles back in the Game inv, then takes 6 new ones
+func (player *Player) refreshTiles(game *Game) {
+
+	for _, t := range player.Tiles {
+		err := player.returnTileToBank(game, t)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	// shuffle the tiles
+	rand.Shuffle(len(game.Tiles), func(i, j int) {
+		game.Tiles[i], game.Tiles[j] = game.Tiles[j], game.Tiles[i]
+	})
+
+	for i := 0; i < 6; i++ {
+		err := player.takeTileFromBank(game)
+		if err != nil {
+			game.end("no tiles left")
+			return
+		}
+	}
 }

@@ -20,10 +20,26 @@ func (game *Game) getPickHotelToMergeActions() []gmcts.Action {
 }
 
 func (game *Game) applyPickHotelToMergeAction(action Action_PickHotelToMerge) {
-	game.MergerState.AcquiringHotel = action.Hotel
+	pos := game.LastPlacedTile.Pos()
+	neighboringHotels := getNeighbors(game, pos)
+	chainsInNeighbors := getChainsInNeighbors(neighboringHotels)
+	acquiredChains := util.Filter(chainsInNeighbors, func(val Hotel) bool {
+		return val != action.Hotel
+	})
+	largestAcquiredChains, _ := game.getLargestChainsOf(acquiredChains)
 
 	// remove the acquiring hotel chain from the list to merge (by setting it to zero)
 	game.MergerState.ChainsToMerge[action.Hotel.Index()] = 0
 
+	// prepare the 'chains to merge' array
+	for _, h := range HotelChainList {
+		// ok = this hotel is in the 'largest chains' slice, but isn't the largest chain
+		_, ok := util.IndexOf(largestAcquiredChains, h)
+		if ok {
+			game.MergerState.ChainsToMerge[h.Index()] = len(game.Players)
+		}
+	}
+
+	game.MergerState.AcquiringHotel = action.Hotel
 	game.NextActionType = ActionType_Merge
 }
