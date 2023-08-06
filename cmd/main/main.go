@@ -17,7 +17,8 @@ func main() {
 	for _, player := range game.Players {
 		agents[player.Id] = ai.NewStupidAgent()
 	}
-	agents[game.Players[0].Id] = ai.NewSmartAgent()
+	agents[game.Players[0].Id] = ai.NewSmartAgent(200)
+	agents[game.Players[1].Id] = ai.NewSmartAgent(200)
 
 	for !game.IsTerminal() {
 
@@ -29,6 +30,7 @@ func main() {
 		}
 		newGame, _ := game.ApplyAction(action)
 		game = newGame.(*acquire.Game)
+
 		console_interface.Render(game)
 	}
 

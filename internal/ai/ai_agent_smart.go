@@ -6,18 +6,21 @@ import (
 )
 
 type SmartAgent struct {
+	intelligence int
 }
 
-func NewSmartAgent() *SmartAgent {
-	return &SmartAgent{}
+func NewSmartAgent(intelligence int) *SmartAgent {
+	return &SmartAgent{
+		intelligence: intelligence,
+	}
 }
 
 func (agent SmartAgent) SelectAction(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
 	mcts := gmcts.NewMCTS(game)
 
-	//Spawn a new tree and play 1000 game simulations
+	//Spawn a new tree and play some n number game simulations
 	tree := mcts.SpawnTree()
-	tree.SearchRounds(50)
+	tree.SearchRounds(agent.intelligence)
 
 	//Add the searched tree into the mcts tree collection
 	mcts.AddTree(tree)

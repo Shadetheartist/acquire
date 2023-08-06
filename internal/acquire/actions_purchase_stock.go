@@ -20,28 +20,68 @@ func (a Action_PurchaseStock) Type() ActionType {
 	return ActionType_PurchaseStock
 }
 
+func generateCombinations(activeHotels []Hotel) [][]Hotel {
+
+	var combinations [][]Hotel
+
+	l := len(activeHotels)
+	for i := 0; i < l; i++ {
+		for j := i; j < l; j++ {
+			for k := j; k < l; k++ {
+				combinations = append(combinations, []Hotel{
+					activeHotels[i],
+					activeHotels[j],
+					activeHotels[k],
+				})
+			}
+		}
+	}
+
+	return combinations
+}
+
 func (game *Game) getPurchaseStockActions() []gmcts.Action {
-	// keeping this simple for now
-	actions := util.Map(game.Computed.ActiveChains, func(val Hotel) gmcts.Action {
-		return Action_PurchaseStock{
+
+	options := append(game.Computed.ActiveChains, NoHotel)
+	combinations := generateCombinations(options)
+
+	actions := make([]gmcts.Action, 0)
+
+	for _, combination := range combinations {
+
+		remainingHotels := make(map[Hotel]int, 0)
+
+		for _, h := range combination {
+			if h != NoHotel {
+				remainingHotels[h] = game.Stocks[h.Index()]
+			} else {
+				remainingHotels[h] = 0
+			}
+		}
+
+		use := func(hotel Hotel) int {
+			v := util.Min(1, remainingHotels[hotel])
+			remainingHotels[hotel] -= 1
+			return util.Max(v, 0)
+		}
+
+		actions = append(actions, Action_PurchaseStock{
 			Purchases: [3]StockPurchase{
 				{
-					Hotel:  val,
-					Amount: 0,
+					Hotel:  combination[0],
+					Amount: use(combination[0]),
+				},
+				{
+					Hotel:  combination[1],
+					Amount: use(combination[1]),
+				},
+				{
+					Hotel:  combination[2],
+					Amount: use(combination[2]),
 				},
 			},
-		}
-	})
-
-	// default action to buy nothing
-	actions = append(actions, Action_PurchaseStock{
-		Purchases: [3]StockPurchase{
-			{
-				Hotel:  NoHotel,
-				Amount: 0,
-			},
-		},
-	})
+		})
+	}
 
 	return actions
 }
