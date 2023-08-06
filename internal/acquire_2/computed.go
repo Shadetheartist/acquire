@@ -11,6 +11,9 @@ type Computed struct {
 
 	// the current player's legal moves
 	LegalMoves []Tile
+
+	// mapping of player id to their total net worth (money + value of currently held stocks)
+	PlayerNetWorth map[int]int
 }
 
 func NewComputed(game *Game) *Computed {
@@ -18,8 +21,20 @@ func NewComputed(game *Game) *Computed {
 
 	computed.computeChains(game)
 	computed.computeLegalMoves(game)
+	computed.computePlayerNetWorths(game)
 
 	return computed
+}
+
+func (c *Computed) computePlayerNetWorths(game *Game) {
+	c.PlayerNetWorth = make(map[int]int)
+	for _, p := range game.Players {
+		netWorth := p.Money
+		for _, chain := range c.ActiveChains {
+			netWorth += sharesCalc(chain, game.ChainSize[chain.Index()], p.Stocks[chain.Index()])
+		}
+		c.PlayerNetWorth[p.Id] = netWorth
+	}
 }
 
 func (c *Computed) computeChains(game *Game) {

@@ -3,6 +3,7 @@ package acquire_2
 import (
 	"acquire/internal/util"
 	"git.sr.ht/~bonbon/gmcts"
+	"sort"
 )
 
 const BOARD_MAX_X = 12
@@ -99,8 +100,28 @@ func (game *Game) IsTerminal() bool {
 }
 
 func (game *Game) Winners() []gmcts.Player {
-	//TODO implement me
-	panic("implement me")
+	playerSlice := make([]Player, len(game.Players))
+
+	for i := 0; i < len(game.Players); i++ {
+		playerSlice[i] = game.Players[i]
+	}
+
+	sort.SliceStable(playerSlice, func(i, j int) bool {
+		return playerSlice[i].NetWorth(game) > playerSlice[j].NetWorth(game)
+	})
+
+	outSlice := make([]gmcts.Player, 0)
+
+	highestMoney := playerSlice[0].NetWorth(game)
+	for _, p := range playerSlice {
+		if p.NetWorth(game) == highestMoney {
+			outSlice = append(outSlice, gmcts.Player(p.Id))
+		} else {
+			break
+		}
+	}
+
+	return outSlice
 }
 
 func (game *Game) CurrentPlayer() *Player {
@@ -197,4 +218,14 @@ func (game *Game) placeTileOnBoard(tile Tile, hotel Hotel) PlacedHotel {
 	}
 
 	return newPlacedHotel
+}
+
+func (game *Game) GetPlayerById(id int) *Player {
+	for _, p := range game.Players {
+		if p.Id == id {
+			return &p
+		}
+	}
+
+	return nil
 }

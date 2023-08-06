@@ -253,3 +253,7 @@ func (player *Player) refreshTiles(game *Game) {
 		}
 	}
 }
+
+func (player *Player) NetWorth(game *Game) int {
+	return game.Computed.PlayerNetWorth[player.Id]
+}

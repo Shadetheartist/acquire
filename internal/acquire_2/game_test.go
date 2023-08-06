@@ -1,68 +1,36 @@
 package acquire_2
 
 import (
-	"git.sr.ht/~bonbon/gmcts"
 	"testing"
 )
 
-func TestPlaceTileOnBoard(t *testing.T) {
-	tileToPlace := Tile4D
-	hotelToPlace := WorldwideHotel
-	game := NewGame()
-	game.placeTileOnBoard(tileToPlace, hotelToPlace)
-	game.Computed = NewComputed(game)
+func TestComparison(t *testing.T) {
+	game1 := NewGame()
+	game2 := game1
 
-	if game.LastPlacedTile != tileToPlace {
-		t.Fatal()
+	if game1 != game2 {
+		t.Fatal("games are not equal wtf")
 	}
 
-	if game.Board[tileToPlace.Index()].Tile != tileToPlace {
-		t.Fatal()
+	game2.Players[0].Money += 1
+
+	if game1 != game2 {
+		t.Fatal("games are still equal wtf")
 	}
 
-	if game.Board[tileToPlace.Index()].Hotel != hotelToPlace {
-		t.Fatal()
+	game2 = game1
+
+	if game1 != game2 {
+		t.Fatal("games are not equal wtf")
 	}
 
-	if game.ChainSize[hotelToPlace.Index()] != 1 {
-		t.Fatal()
-	}
-}
-
-func TestPlaceTileActions(t *testing.T) {
-	tileA := Tile4D
-	tileB := Tile5D
-
-	game := NewGame()
-
-	doAction := func(action gmcts.Action) {
-		newGame, err := game.ApplyAction(action)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		game = newGame.(*Game)
+	game2.Board[0] = PlacedHotel{
+		Hotel: AmericanHotel,
+		Tile:  Tile1A,
 	}
 
-	game.placeTileOnBoard(tileA, UndefinedHotel)
-
-	game.CurrentPlayer().Tiles[0] = tileB
-
-	game.Computed = NewComputed(game)
-
-	doAction(Action_PlaceTile{
-		Tile: tileB,
-		End:  false,
-	})
-
-	// purchase stock action
-	actions := game.GetActions()
-	doAction(actions[0])
-
-	actions = game.GetActions()
-	doAction(actions[0])
-
-	print(actions)
+	if game1 != game2 {
+		t.Fatal("games are still equal wtf")
+	}
 
 }

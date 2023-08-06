@@ -4,11 +4,6 @@ import "sort"
 
 type Hotel int
 
-type HotelChain struct {
-	Hotel Hotel
-	Size  int
-}
-
 func (h Hotel) String() string {
 	return hotelNames[h]
 }
