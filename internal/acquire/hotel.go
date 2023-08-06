@@ -4,17 +4,25 @@ import "sort"
 
 type Hotel int
 
-type HotelChain struct {
-	Hotel Hotel
-	Size  int
-}
-
 func (h Hotel) String() string {
 	return hotelNames[h]
 }
 
 func (h Hotel) Initial() string {
 	return hotelInitials[h]
+}
+
+// Index
+// index of hotel chain in the HotelChainList
+func (h Hotel) Index() int {
+	// -1 for no hotel, -1 for undefined hotel = -2
+	idx := int(h) - 2
+
+	if idx < 0 {
+		panic("hotel index used for NoHotel or UndefinedHotel (or other?)")
+	}
+
+	return idx
 }
 
 var hotelInitials = []string{
@@ -85,39 +93,10 @@ const (
 	TowerHotel
 )
 
-func isActualHotelChain(hotel Hotel) bool {
-	for _, h := range HotelChainList {
-		if h == hotel {
-			return true
-		}
-	}
-
-	return false
-}
-
-func hotelFromInitial(str string) Hotel {
-	for idx, initial := range hotelInitials {
-		if initial == str {
-			return HotelList[idx]
-		}
-	}
-
-	return NoHotel
-}
-
-func hotelsWithPurchasableStock(game *Game) []Hotel {
-	hotels := make([]Hotel, 0)
-
-	stocks := game.purchasableStocks()
-	for s, n := range stocks {
-		if n > 0 {
-			hotels = append(hotels, Hotel(s))
-		}
-	}
-
-	sortHotels(hotels)
-
-	return hotels
+// ChainFromIdx
+// maps the index range [0-6] to valid hotel chains from HotelChainList
+func ChainFromIdx(idx int) Hotel {
+	return HotelChainList[idx]
 }
 
 func sortHotels(hotels []Hotel) {

@@ -1,7 +1,7 @@
 package console_interface
 
 import (
-	"acquire/internal/acquire_2"
+	"acquire/internal/acquire"
 	"acquire/internal/util"
 	"fmt"
 	"strconv"
@@ -12,7 +12,7 @@ var chars = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i"}
 
 const FILL_SIZE = 3
 
-func Render(game *acquire_2.Game) {
+func Render(game *acquire.Game) {
 	fmt.Print("\033[H\033[2J")
 	fmt.Println()
 	fmt.Println("Acquire | Tiles Left:", game.NumRemainingTiles())
@@ -55,7 +55,7 @@ func rfill(s string, n int) string {
 	return strings.Repeat(" ", l) + s
 }
 
-func renderCurrentPlayer(game *acquire_2.Game) {
+func renderCurrentPlayer(game *acquire.Game) {
 	player := game.CurrentPlayer()
 
 	fmt.Println()
@@ -68,7 +68,7 @@ func renderCurrentPlayer(game *acquire_2.Game) {
 
 }
 
-func renderPlayers(game *acquire_2.Game) {
+func renderPlayers(game *acquire.Game) {
 	fmt.Printf(fill("Turn: ", 8))
 	fillSize := 10
 	for _, p := range game.Players {
@@ -81,14 +81,14 @@ func renderPlayers(game *acquire_2.Game) {
 	fmt.Println()
 }
 
-func renderPlayerInventories(game *acquire_2.Game) {
+func renderPlayerInventories(game *acquire.Game) {
 	fmt.Println("Inventories:")
 	nameFillSize := 9
 	fillSize := 3
 
 	fmt.Print(fill(" ", nameFillSize))
 	fmt.Print(rfill("", nameFillSize))
-	for _, h := range acquire_2.HotelChainList {
+	for _, h := range acquire.HotelChainList {
 		fmt.Print(fill(h.Initial(), fillSize))
 	}
 	println()
@@ -96,7 +96,7 @@ func renderPlayerInventories(game *acquire_2.Game) {
 	for _, p := range game.Players {
 		fmt.Print(rfill(p.Name()+" ", nameFillSize))
 		fmt.Print(fill(fmt.Sprintf("$%d", p.Money), nameFillSize))
-		for h, _ := range acquire_2.HotelChainList {
+		for h, _ := range acquire.HotelChainList {
 			fmt.Print(fill(strconv.Itoa(p.Stocks[h]), fillSize))
 		}
 		println()
@@ -104,9 +104,9 @@ func renderPlayerInventories(game *acquire_2.Game) {
 	fmt.Println()
 }
 
-func renderBoard(game *acquire_2.Game) {
+func renderBoard(game *acquire.Game) {
 
-	for x := 0; x <= acquire_2.BOARD_MAX_X; x++ {
+	for x := 0; x <= acquire.BOARD_MAX_X; x++ {
 		if x == 0 {
 			fmt.Print(fill(" ", FILL_SIZE))
 			continue
@@ -115,7 +115,7 @@ func renderBoard(game *acquire_2.Game) {
 	}
 	fmt.Println()
 
-	validPlacementPositions := util.Map(game.Computed.LegalMoves, func(val acquire_2.Tile) util.Point[int] {
+	validPlacementPositions := util.Map(game.Computed.LegalMoves, func(val acquire.Tile) util.Point[int] {
 		return val.Pos()
 	})
 	isValidPlacement := func(x int, y int) bool {
@@ -123,13 +123,13 @@ func renderBoard(game *acquire_2.Game) {
 		return ok
 	}
 
-	for y := 0; y < acquire_2.BOARD_MAX_Y; y++ {
+	for y := 0; y < acquire.BOARD_MAX_Y; y++ {
 		fmt.Print(chars[y] + strings.Repeat(" ", FILL_SIZE-1))
 
-		for x := 0; x < acquire_2.BOARD_MAX_X; x++ {
+		for x := 0; x < acquire.BOARD_MAX_X; x++ {
 			placedHotel := game.PlacementAtPos(util.Point[int]{X: x, Y: y})
 
-			if placedHotel.Hotel == acquire_2.NoHotel {
+			if placedHotel.Hotel == acquire.NoHotel {
 				if isValidPlacement(x, y) {
 					fmt.Print(fill("\u25CB", FILL_SIZE))
 				} else {
@@ -138,7 +138,7 @@ func renderBoard(game *acquire_2.Game) {
 				continue
 			}
 
-			if placedHotel.Hotel == acquire_2.UndefinedHotel {
+			if placedHotel.Hotel == acquire.UndefinedHotel {
 				fmt.Print(fill("\u25A0", FILL_SIZE))
 				continue
 			}

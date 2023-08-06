@@ -8,7 +8,7 @@ import (
 type Tile int
 
 func (t Tile) String() string {
-	return TileStringMap[t.Index()]
+	return TileStringMap[t]
 }
 
 func TileFromString(str string) Tile {
@@ -17,15 +17,21 @@ func TileFromString(str string) Tile {
 			return Tile(idx)
 		}
 	}
+
 	return NoTile
 }
 
 func (t Tile) Index() int {
-	return int(t)
+	// the tile IS the index of its position on the board if you
+	// subtract one, since NoTile is the zero value
+	return int(t - 1)
+}
+
+func TileFromBoardIdx(idx int) Tile {
+	return Tile(idx + 1)
 }
 
 func (t Tile) Pos() util.Point[int] {
-	// the tile IS the index of its position on the board
 	idx := t.Index()
 	return util.Point[int]{
 		X: idx % BOARD_MAX_X,
@@ -33,10 +39,12 @@ func (t Tile) Pos() util.Point[int] {
 	}
 }
 
-func randomizedTiles() []Tile {
-	tiles := make([]Tile, len(TileList))
+func randomizedTiles() [108]Tile {
+	tiles := [108]Tile{}
 
-	copy(tiles, TileList)
+	for i := 0; i < len(TileList); i++ {
+		tiles[i] = Tile(i)
+	}
 
 	rand.Shuffle(len(tiles), func(i, j int) {
 		tiles[i], tiles[j] = tiles[j], tiles[i]
@@ -45,52 +53,9 @@ func randomizedTiles() []Tile {
 	return tiles
 }
 
-// isActualTile
-// this compares the tile (which is just a string) to the list
-// of predefined tiles to see if the tile is a valid board space
-func isActualTile(tile Tile) bool {
-	for _, t := range TileList {
-		if t == tile {
-			return true
-		}
-	}
-
-	return false
-}
-
-func isLegalToPlace(game *Game, tile Tile) bool {
-	pos := tile.Pos()
-	neighboringHotels := game.Board.Matrix.GetNeighbors(pos)
-	chainsInNeighbors := getChainsInNeighbors(neighboringHotels)
-
-	// this tile would start a merger if placed
-	if len(chainsInNeighbors) > 1 {
-		// if both neighbors are size > 10, then they are both safe from merging and the placement isn't legal
-		sizes := countHotelChains(game, chainsInNeighbors)
-		anyMergable := util.AnyInMap(sizes, func(key Hotel, val int) bool {
-			return val < 11
-		})
-
-		if !anyMergable {
-			return false
-		}
-	}
-
-	// this would found a new chain if placed
-	undefinedNeighbors := getUndefinedNeighbors(neighboringHotels)
-	if len(undefinedNeighbors) > 0 {
-		// if there are no available chains left to create, this move is invalid
-		availableChains := GetAvailableHotelChains(game)
-		if len(availableChains) < 1 {
-			return false
-		}
-	}
-
-	return true
-}
-
 const (
-	Tile1A Tile = iota
+	NoTile Tile = iota
+	Tile1A
 	Tile2A
 	Tile3A
 	Tile4A
@@ -198,7 +163,6 @@ const (
 	Tile10I
 	Tile11I
 	Tile12I
-	NoTile
 )
 
 var TileList = []Tile{
@@ -313,6 +277,7 @@ var TileList = []Tile{
 }
 
 var TileStringMap = []string{
+	"None",
 	"1A",
 	"2A",
 	"3A",

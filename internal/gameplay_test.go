@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"acquire/internal/acquire_2"
+	"acquire/internal/acquire"
 	"acquire/internal/ai"
 	"log"
 	"math/rand"
@@ -22,7 +22,7 @@ func Benchmark(b *testing.B) {
 
 	rand.Seed(int64(2))
 	for i := 0; i < b.N; i++ {
-		game := acquire_2.NewGame()
+		game := acquire.NewGame()
 
 		agents := make(map[int]ai.IAgent)
 		for _, player := range game.Players {
@@ -38,7 +38,7 @@ func Benchmark(b *testing.B) {
 				panic(err)
 			}
 			newGame, _ := game.ApplyAction(action)
-			game = newGame.(*acquire_2.Game)
+			game = newGame.(*acquire.Game)
 
 		}
 	}

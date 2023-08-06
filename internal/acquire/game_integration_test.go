@@ -1,4 +1,4 @@
-package acquire_2
+package acquire
 
 import (
 	"git.sr.ht/~bonbon/gmcts"

@@ -1,10 +1,10 @@
 package ai
 
 import (
-	"acquire/internal/acquire_2"
+	"acquire/internal/acquire"
 	"git.sr.ht/~bonbon/gmcts"
 )
 
 type IAgent interface {
-	SelectAction(game *acquire_2.Game, actions []gmcts.Action) (gmcts.Action, error)
+	SelectAction(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error)
 }

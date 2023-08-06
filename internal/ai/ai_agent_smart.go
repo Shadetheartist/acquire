@@ -1,7 +1,7 @@
 package ai
 
 import (
-	"acquire/internal/acquire_2"
+	"acquire/internal/acquire"
 	"git.sr.ht/~bonbon/gmcts"
 )
 
@@ -12,12 +12,12 @@ func NewSmartAgent() *SmartAgent {
 	return &SmartAgent{}
 }
 
-func (agent SmartAgent) SelectAction(game *acquire_2.Game, actions []gmcts.Action) (gmcts.Action, error) {
+func (agent SmartAgent) SelectAction(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
 	mcts := gmcts.NewMCTS(game)
 
 	//Spawn a new tree and play 1000 game simulations
 	tree := mcts.SpawnTree()
-	tree.SearchRounds(5)
+	tree.SearchRounds(50)
 
 	//Add the searched tree into the mcts tree collection
 	mcts.AddTree(tree)

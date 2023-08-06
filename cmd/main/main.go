@@ -1,7 +1,7 @@
 package main
 
 import (
-	"acquire/internal/acquire_2"
+	"acquire/internal/acquire"
 	"acquire/internal/ai"
 	"acquire/internal/console_interface"
 	"math/rand"
@@ -11,7 +11,7 @@ func main() {
 
 	rand.Seed(int64(2))
 
-	game := acquire_2.NewGame()
+	game := acquire.NewGame()
 
 	agents := make(map[int]ai.IAgent)
 	for _, player := range game.Players {
@@ -28,7 +28,7 @@ func main() {
 			panic(err)
 		}
 		newGame, _ := game.ApplyAction(action)
-		game = newGame.(*acquire_2.Game)
+		game = newGame.(*acquire.Game)
 		console_interface.Render(game)
 	}
 
