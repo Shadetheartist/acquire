@@ -16,6 +16,7 @@ func NewSmartAgent(intelligence int) *SmartAgent {
 }
 
 func (agent SmartAgent) SelectAction(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
+
 	mcts := gmcts.NewMCTS(game)
 
 	//Spawn a new tree and play some n number game simulations

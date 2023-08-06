@@ -13,9 +13,11 @@ var chars = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i"}
 const FILL_SIZE = 3
 
 func Render(game *acquire.Game) {
+	// this clears the console (kinda)
 	fmt.Print("\033[H\033[2J")
+
 	fmt.Println()
-	fmt.Println("Acquire | Tiles Left:", game.NumRemainingTiles())
+	fmt.Printf("Acquire | Turn %d | Tiles Left: %d\n", game.Turn, game.NumRemainingTiles())
 	renderPlayers(game)
 	renderPlayerInventories(game)
 	renderBoard(game)
@@ -26,8 +28,9 @@ func Render(game *acquire.Game) {
 		fmt.Println("Game Over, Final Scores")
 
 		for _, p := range game.Players {
-			fmt.Printf("%s: $%d ", p.Name(), p.NetWorth(game))
+			fmt.Printf("%s: $%d\n", p.Name(), p.NetWorth(game))
 		}
+		fmt.Println()
 
 		fmt.Println("Winner(s)")
 		for _, playerId := range game.Winners() {
@@ -69,7 +72,7 @@ func renderCurrentPlayer(game *acquire.Game) {
 }
 
 func renderPlayers(game *acquire.Game) {
-	fmt.Printf(fill("Turn: ", 8))
+	fmt.Printf(fill("Player:", 8))
 	fillSize := 10
 	for _, p := range game.Players {
 		if p.Id == game.CurrentPlayer().Id {
@@ -87,10 +90,11 @@ func renderPlayerInventories(game *acquire.Game) {
 	fillSize := 3
 
 	fmt.Print(fill(" ", nameFillSize))
-	fmt.Print(rfill("", nameFillSize))
+	fmt.Print(fill("Money", nameFillSize))
 	for _, h := range acquire.HotelChainList {
 		fmt.Print(fill(h.Initial(), fillSize))
 	}
+	fmt.Print(fill("Net Worth", nameFillSize))
 	println()
 
 	for _, p := range game.Players {
@@ -99,6 +103,7 @@ func renderPlayerInventories(game *acquire.Game) {
 		for h, _ := range acquire.HotelChainList {
 			fmt.Print(fill(strconv.Itoa(p.Stocks[h]), fillSize))
 		}
+		fmt.Print(fill(fmt.Sprintf("$%d", p.NetWorth(game)), nameFillSize))
 		println()
 	}
 	fmt.Println()

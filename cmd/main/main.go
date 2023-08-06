@@ -3,13 +3,60 @@ package main
 import (
 	"acquire/internal/acquire"
 	"acquire/internal/ai"
-	"acquire/internal/console_interface"
+	"acquire/internal/util"
+	"encoding/csv"
+	"fmt"
 	"math/rand"
+	"os"
+	"strconv"
+	"sync"
+	"time"
 )
 
 func main() {
+	f, err := os.Create("./data_out.csv")
+	if err != nil {
+		panic(err)
+	}
+	w := csv.NewWriter(f)
 
-	rand.Seed(int64(2))
+	_ = w.Write([]string{"I", "T(s)", "P1 Int", "1", "2", "3", "4"})
+
+	n := 100
+	simCount := 1
+	totalData := make([][]string, 0, n)
+	wg := sync.WaitGroup{}
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func(i int) {
+			for s := 0; s < simCount; s++ {
+				start := time.Now()
+				intel := i*10 + 1
+				game := runGame(s, intel)
+				playerSlice := game.PlayerSlice()
+				data := util.Map(playerSlice, func(player acquire.Player) string {
+					return strconv.Itoa(player.NetWorth(game))
+				})
+				end := time.Now().Sub(start)
+				data = append([]string{
+					strconv.Itoa(i),
+					strconv.Itoa(int(end.Seconds())),
+					strconv.Itoa(intel)},
+					data...,
+				)
+				totalData = append(totalData, data)
+				_ = w.Write(data)
+				fmt.Printf("I: %d, Int: %d, Sim #: %d, Game Turn: %d\n", i, intel, s, game.Turn)
+			}
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	w.Flush()
+}
+
+func runGame(seed int, smartPlayerIntelligence int) *acquire.Game {
+	rand.Seed(int64(seed))
 
 	game := acquire.NewGame()
 
@@ -17,8 +64,7 @@ func main() {
 	for _, player := range game.Players {
 		agents[player.Id] = ai.NewStupidAgent()
 	}
-	agents[game.Players[0].Id] = ai.NewSmartAgent(200)
-	agents[game.Players[1].Id] = ai.NewSmartAgent(200)
+	agents[game.Players[0].Id] = ai.NewSmartAgent(smartPlayerIntelligence)
 
 	for !game.IsTerminal() {
 
@@ -30,8 +76,9 @@ func main() {
 		}
 		newGame, _ := game.ApplyAction(action)
 		game = newGame.(*acquire.Game)
-
-		console_interface.Render(game)
 	}
 
+	//console_interface.Render(game)
+
+	return game
 }

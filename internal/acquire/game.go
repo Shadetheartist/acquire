@@ -100,11 +100,7 @@ func (game *Game) IsTerminal() bool {
 }
 
 func (game *Game) Winners() []gmcts.Player {
-	playerSlice := make([]Player, len(game.Players))
-
-	for i := 0; i < len(game.Players); i++ {
-		playerSlice[i] = game.Players[i]
-	}
+	playerSlice := game.PlayerSlice()
 
 	sort.SliceStable(playerSlice, func(i, j int) bool {
 		return playerSlice[i].NetWorth(game) > playerSlice[j].NetWorth(game)
@@ -130,6 +126,16 @@ func (game *Game) CurrentPlayer() *Player {
 
 func (game *Game) NextPlayer() *Player {
 	return &game.Players[game.playerTurn(1)]
+}
+
+func (game *Game) PlayerSlice() []Player {
+	playerSlice := make([]Player, len(game.Players))
+
+	for i := 0; i < len(game.Players); i++ {
+		playerSlice[i] = game.Players[i]
+	}
+
+	return playerSlice
 }
 
 // playerTurn
