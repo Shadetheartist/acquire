@@ -123,7 +123,7 @@ func (game *Game) Abort(reason string) {
 	os.Exit(1)
 }
 
-func (game *Game) end(reason string) {
+func (game *Game) end(_ string) {
 
 	game.IsOver = true
 

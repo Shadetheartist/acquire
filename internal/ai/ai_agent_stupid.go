@@ -14,7 +14,7 @@ func NewStupidAgent() *StupidAgent {
 	return &StupidAgent{}
 }
 
-func (agent StupidAgent) SelectAction(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
+func (agent StupidAgent) SelectAction(_ *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
 	if len(actions) == 0 {
 		return nil, errors.New("no actions to select")
 	}

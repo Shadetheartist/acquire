@@ -15,7 +15,7 @@ func NewSmartAgent(intelligence int) *SmartAgent {
 	}
 }
 
-func (agent SmartAgent) SelectAction(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
+func (agent SmartAgent) SelectAction(game *acquire.Game, _ []gmcts.Action) (gmcts.Action, error) {
 
 	mcts := gmcts.NewMCTS(game)
 

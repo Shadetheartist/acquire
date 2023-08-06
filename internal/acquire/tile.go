@@ -11,16 +11,6 @@ func (t Tile) String() string {
 	return TileStringMap[t]
 }
 
-func TileFromString(str string) Tile {
-	for idx, tileStr := range TileStringMap {
-		if str == tileStr {
-			return Tile(idx)
-		}
-	}
-
-	return NoTile
-}
-
 func (t Tile) Index() int {
 	// the tile IS the index of its position on the board if you
 	// subtract one, since NoTile is the zero value

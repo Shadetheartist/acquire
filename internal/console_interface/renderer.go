@@ -100,7 +100,7 @@ func renderPlayerInventories(game *acquire.Game) {
 	for _, p := range game.Players {
 		fmt.Print(rfill(p.Name()+" ", nameFillSize))
 		fmt.Print(fill(fmt.Sprintf("$%d", p.Money), nameFillSize))
-		for h, _ := range acquire.HotelChainList {
+		for h := range acquire.HotelChainList {
 			fmt.Print(fill(strconv.Itoa(p.Stocks[h]), fillSize))
 		}
 		fmt.Print(fill(fmt.Sprintf("$%d", p.NetWorth(game)), nameFillSize))

@@ -1,7 +1,5 @@
 package acquire
 
-import "sort"
-
 type Hotel int
 
 func (h Hotel) String() string {
@@ -37,14 +35,6 @@ var hotelInitials = []string{
 	"T", //TowerHotel
 }
 
-func hotelsAsInitials(hotels []Hotel) []string {
-	initials := make([]string, len(hotels))
-	for i, h := range hotels {
-		initials[i] = hotelInitials[h]
-	}
-	return initials
-}
-
 var hotelNames = []string{
 	"No Hotel",
 	"Undefined",
@@ -55,18 +45,6 @@ var hotelNames = []string{
 	"American",
 	"Continental",
 	"Tower",
-}
-
-var HotelList = []Hotel{
-	NoHotel,
-	UndefinedHotel,
-	WorldwideHotel,
-	SacksonHotel,
-	FestivalHotel,
-	ImperialHotel,
-	AmericanHotel,
-	ContinentalHotel,
-	TowerHotel,
 }
 
 // HotelChainList
@@ -97,10 +75,4 @@ const (
 // maps the index range [0-6] to valid hotel chains from HotelChainList
 func ChainFromIdx(idx int) Hotel {
 	return HotelChainList[idx]
-}
-
-func sortHotels(hotels []Hotel) {
-	sort.Slice(hotels, func(i, j int) bool {
-		return hotels[i] < hotels[j]
-	})
 }
