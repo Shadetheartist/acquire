@@ -3,6 +3,7 @@ package main
 import (
 	"acquire/internal/acquire"
 	"acquire/internal/ai"
+	"acquire/internal/console_interface"
 	"acquire/internal/util"
 	"encoding/csv"
 	"fmt"
@@ -14,6 +15,10 @@ import (
 )
 
 func main() {
+	runGame(0, 550, true)
+}
+
+func analyzeAIPerformance() {
 	f, err := os.Create("./data_out.csv")
 	if err != nil {
 		panic(err)
@@ -32,7 +37,7 @@ func main() {
 			for s := 0; s < simCount; s++ {
 				start := time.Now()
 				intel := i*10 + 1
-				game := runGame(s, intel)
+				game := runGame(s, intel, false)
 				playerSlice := game.PlayerSlice()
 				data := util.Map(playerSlice, func(player acquire.Player) string {
 					return strconv.Itoa(player.NetWorth(game))
@@ -55,7 +60,7 @@ func main() {
 	w.Flush()
 }
 
-func runGame(seed int, smartPlayerIntelligence int) *acquire.Game {
+func runGame(seed int, smartPlayerIntelligence int, display bool) *acquire.Game {
 	rand.Seed(int64(seed))
 
 	game := acquire.NewGame()
@@ -64,9 +69,14 @@ func runGame(seed int, smartPlayerIntelligence int) *acquire.Game {
 	for _, player := range game.Players {
 		agents[player.Id] = ai.NewStupidAgent()
 	}
-	agents[game.Players[0].Id] = ai.NewSmartAgent(smartPlayerIntelligence)
+	agents[game.Players[0].Id] = ai.NewHumanAgent()
+	agents[game.Players[1].Id] = ai.NewSmartAgent(smartPlayerIntelligence)
 
 	for !game.IsTerminal() {
+
+		if display {
+			console_interface.Render(game)
+		}
 
 		agent := agents[game.CurrentPlayer().Id]
 		actions := game.GetActions()
@@ -76,9 +86,12 @@ func runGame(seed int, smartPlayerIntelligence int) *acquire.Game {
 		}
 		newGame, _ := game.ApplyAction(action)
 		game = newGame.(*acquire.Game)
+
 	}
 
-	//console_interface.Render(game)
+	if display {
+		console_interface.Render(game)
+	}
 
 	return game
 }

@@ -7,6 +7,19 @@ import (
 
 type MergerAction int
 
+func (ma MergerAction) String() string {
+	switch ma {
+	case Hold:
+		return "Hold"
+	case Trade:
+		return "Trade"
+	case Sell:
+		return "Sell"
+	default:
+		panic("AAAH")
+	}
+}
+
 const (
 	Hold MergerAction = iota
 	Trade

@@ -82,6 +82,10 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 	if len(chainsInNeighbors) == 1 {
 		hotel := chainsInNeighbors[0]
 		game.placeTileOnBoard(tile, hotel)
+		propagateHotelChain(game, PlacedHotel{
+			Hotel: hotel,
+			Tile:  tile,
+		})
 
 		goNext()
 		return

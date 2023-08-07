@@ -1,6 +1,7 @@
 package acquire
 
 import (
+	"acquire/internal/util"
 	"fmt"
 	"git.sr.ht/~bonbon/gmcts"
 )
@@ -8,6 +9,23 @@ import (
 // this file contains the MCTS related functions
 
 type ActionType int
+
+func (at ActionType) String() string {
+	switch at {
+	case ActionType_PlaceTile:
+		return "Place Tile"
+	case ActionType_PickHotelToFound:
+		return "Pick Hotel To Found"
+	case ActionType_PickHotelToMerge:
+		return "Pick Hotel To Merge"
+	case ActionType_Merge:
+		return "Merge"
+	case ActionType_PurchaseStock:
+		return "Purchase Stock"
+	default:
+		panic("wtf")
+	}
+}
 
 // need to rework the game so that it is a state machine which is updated by these action types
 const (
@@ -22,14 +40,6 @@ type IAction interface {
 	Type() ActionType
 }
 
-func asType[T any](action any) T {
-	_action, ok := action.(T)
-	if !ok {
-		panic("action not of correct type")
-	}
-	return _action
-}
-
 func (game *Game) ApplyAction(gmctsAction gmcts.Action) (gmcts.Game, error) {
 
 	gameStruct := *game
@@ -42,18 +52,18 @@ func (game *Game) ApplyAction(gmctsAction gmcts.Action) (gmcts.Game, error) {
 
 	switch action.Type() {
 	case ActionType_PlaceTile:
-		clone.applyPlaceTileAction(asType[Action_PlaceTile](action))
+		clone.applyPlaceTileAction(util.AsType[Action_PlaceTile](action))
 	case ActionType_PickHotelToFound:
-		clone.applyPickHotelToFoundAction(asType[Action_PickHotelToFound](action))
+		clone.applyPickHotelToFoundAction(util.AsType[Action_PickHotelToFound](action))
 		break
 	case ActionType_PickHotelToMerge:
-		clone.applyPickHotelToMergeAction(asType[Action_PickHotelToMerge](action))
+		clone.applyPickHotelToMergeAction(util.AsType[Action_PickHotelToMerge](action))
 		break
 	case ActionType_Merge:
-		clone.applyMergeHotel(asType[Action_Merge](action))
+		clone.applyMergeHotel(util.AsType[Action_Merge](action))
 		break
 	case ActionType_PurchaseStock:
-		clone.applyPurchaseStockAction(asType[Action_PurchaseStock](action))
+		clone.applyPurchaseStockAction(util.AsType[Action_PurchaseStock](action))
 		break
 	default:
 		panic(fmt.Sprintf("action %d is not handled", action))
