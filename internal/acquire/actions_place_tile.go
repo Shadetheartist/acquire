@@ -21,7 +21,7 @@ func (game *Game) getPlaceTileActions() []gmcts.Action {
 		skip = refreshOrSkip(game, game.CurrentPlayer(), 1)
 	}
 
-	_, canEnd := game.canEnd()
+	_, canEnd := game.CanEnd()
 	actions := util.Map(moves, func(val Tile) gmcts.Action {
 		return Action_PlaceTile{
 			Tile: val,

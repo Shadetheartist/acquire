@@ -72,12 +72,9 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 
 	player := game.Players[game.MergerState.MergingPlayerIdx]
 
-	game.payShareholderBonuses(hotelToMerge)
-
 	goNext := func() {
 		game.MergerState.MergingPlayerIdx += 1
 		game.MergerState.MergingPlayerIdx = game.MergerState.MergingPlayerIdx % len(game.Players)
-
 		game.MergerState.ChainsToMerge[hotelToMerge.Index()] -= 1
 
 		// err wil be set if there are no more chains to merge
@@ -92,6 +89,9 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 			game.NextActionType = ActionType_PurchaseStock
 		}
 	}
+
+	// pay them boys
+	game.payShareholderBonuses(hotelToMerge)
 
 	// i've set this up so that all the information for a player's merger is provided at once
 	// since they can choose multiple things to do, this loop represents those things.
@@ -118,6 +118,9 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 			break
 		}
 	}
+
+	// must reset the chain size to zero (after propagating)
+	game.ChainSize[hotelToMerge.Index()] = 0
 
 	goNext()
 }

@@ -223,7 +223,7 @@ func (player *Player) pay(amount int) error {
 		return fmt.Errorf("player '%d' cannot afford to pay $%d", player.Id, amount)
 	}
 
-	player.Money += amount
+	player.Money -= amount
 
 	return nil
 }

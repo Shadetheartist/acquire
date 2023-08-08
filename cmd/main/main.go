@@ -90,7 +90,17 @@ func runGame(seed int, smartPlayerIntelligence int, display bool) *acquire.Game 
 	}
 
 	if display {
+
 		console_interface.Render(game)
+
+		fmt.Println()
+		reason, end := game.CanEnd()
+		game2 := game
+		game2.Computed = acquire.NewComputed(game2)
+		if !end {
+			reason = "Game was forced to end."
+		}
+		fmt.Println("End Reason: " + reason)
 	}
 
 	return game

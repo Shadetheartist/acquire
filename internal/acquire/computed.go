@@ -106,7 +106,8 @@ func (c *Computed) computeLegalMoves(game *Game) {
 	legalMoves := make([]Tile, 0, len(game.CurrentPlayer().Tiles))
 
 	for _, t := range game.CurrentPlayer().Tiles {
-		if c.isLegalToPlace(game, t) {
+		legal, _ := c.isLegalToPlace(game, t)
+		if legal {
 			legalMoves = append(legalMoves, t)
 		}
 	}
@@ -114,10 +115,10 @@ func (c *Computed) computeLegalMoves(game *Game) {
 	c.LegalMoves = legalMoves
 }
 
-func (c *Computed) isLegalToPlace(game *Game, tile Tile) bool {
+func (c *Computed) isLegalToPlace(game *Game, tile Tile) (bool, string) {
 
 	if tile == NoTile {
-		return false
+		return false, "no tile is not legal to place"
 	}
 
 	pos := tile.Pos()
@@ -135,19 +136,24 @@ func (c *Computed) isLegalToPlace(game *Game, tile Tile) bool {
 			}
 
 			if numSafe == 2 {
-				return false
+				return false, "there are two safe neighboring chains"
 			}
 		}
+	}
+
+	// this would grow a single chain if placed
+	if len(chainsInNeighbors) == 1 {
+		return true, ""
 	}
 
 	// this would found a new chain if placed
 	undefinedNeighbors := getUndefinedNeighbors(neighboringHotels)
 	if len(undefinedNeighbors) > 0 {
 		// if there are no available chains left to create, this move is invalid
-		if len(game.Computed.AvailableChains) < 1 {
-			return false
+		if len(game.Computed.AvailableChains) == 0 {
+			return false, "there are no remaining hotels to found a chain with"
 		}
 	}
 
-	return true
+	return true, ""
 }

@@ -100,7 +100,7 @@ func handlePurchaseStockActions(game *acquire.Game, actions []gmcts.Action) (gmc
 }
 
 func handlePickHotelToFoundActions(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
-	fmt.Printf("Pick a Hotel to Found (Default=%d):\n", len(actions)-1)
+	fmt.Println("Pick a Hotel to Found (Default=0):")
 
 	for i, a := range actions {
 		action := util.AsType[acquire.Action_PickHotelToFound](a)
@@ -111,7 +111,7 @@ func handlePickHotelToFoundActions(game *acquire.Game, actions []gmcts.Action) (
 }
 
 func handlePickHotelToMergeActions(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
-	fmt.Printf("Pick a Hotel to Merge (Default=%d):\n", len(actions)-1)
+	fmt.Println("Pick a Hotel to Merge (Default=0):")
 
 	for i, a := range actions {
 		action := util.AsType[acquire.Action_PickHotelToMerge](a)
@@ -122,7 +122,7 @@ func handlePickHotelToMergeActions(game *acquire.Game, actions []gmcts.Action) (
 }
 
 func handleMergeActions(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
-	fmt.Printf("Merge (Default=%d):\n", len(actions)-1)
+	fmt.Println("Merge (Default=0):")
 
 	for i, a := range actions {
 		action := util.AsType[acquire.Action_Merge](a)
@@ -173,16 +173,25 @@ func getTileSelection(actions []gmcts.Action) (gmcts.Action, error) {
 func getSelection(actions []gmcts.Action) (gmcts.Action, error) {
 	fmt.Printf("Select one: ")
 
-	input, err := getIntInput()
+	input, err := getInput()
+	if err != nil {
+		return 0, err
+	}
+
+	if input == "" {
+		return actions[0], nil
+	}
+
+	inputInt, err := strconv.Atoi(input)
 	if err != nil {
 		return nil, errors.New("select one of the numbered actions")
 	}
 
-	if input >= len(actions) {
+	if inputInt >= len(actions) {
 		return nil, errors.New("not a valid action to take")
 	}
 
-	return actions[input], nil
+	return actions[inputInt], nil
 }
 
 func getInput() (string, error) {
@@ -190,24 +199,14 @@ func getInput() (string, error) {
 	_, err := fmt.Scanln(&input)
 
 	if err != nil {
+		if err.Error() == "unexpected newline" {
+			return "", nil
+		}
+
 		return "", err
 	}
 
 	return input, nil
-}
-
-func getIntInput() (int, error) {
-	input, err := getInput()
-	if err != nil {
-		return 0, err
-	}
-
-	inputInt, err := strconv.Atoi(input)
-	if err != nil {
-		return 0, err
-	}
-
-	return inputInt, nil
 }
 
 var chars = []byte{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'}

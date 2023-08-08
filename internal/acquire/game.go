@@ -9,7 +9,7 @@ import (
 const BOARD_MAX_X = 12
 const BOARD_MAX_Y = 9
 
-const MAX_PLAYERS = 4
+const MAX_PLAYERS = 2
 const MAX_TILES_IN_HAND = 6
 const NUM_CHAINS = 7
 
@@ -175,14 +175,14 @@ func (game *Game) getShareholders(s Stock) (*Player, int, *Player, int) {
 	var minorShareholder *Player
 	var minorShareholderShares int
 
-	for _, p := range game.Players {
+	for i := range game.Players {
 		h := Hotel(s)
-		numShares := p.Stocks[h.Index()]
+		numShares := game.Players[i].Stocks[h.Index()]
 		if numShares > majorShareholderShares {
-			majorShareholder = &p
+			majorShareholder = &game.Players[i]
 			majorShareholderShares = numShares
 		} else if numShares > minorShareholderShares {
-			minorShareholder = &p
+			minorShareholder = &game.Players[i]
 			minorShareholderShares = numShares
 		}
 	}

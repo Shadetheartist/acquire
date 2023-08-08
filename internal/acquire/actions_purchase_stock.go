@@ -49,6 +49,7 @@ func (game *Game) getPurchaseStockActions() []gmcts.Action {
 
 	for _, combination := range combinations {
 
+		remainingMoney := game.CurrentPlayer().Money
 		remainingHotels := make(map[Hotel]int, 0)
 
 		for _, h := range combination {
@@ -60,12 +61,24 @@ func (game *Game) getPurchaseStockActions() []gmcts.Action {
 		}
 
 		use := func(hotel Hotel) int {
+
+			if hotel == NoHotel {
+				return 0
+			}
+
+			value := shareValueCalc(hotel, game.ChainSize[hotel.Index()])
+			if remainingMoney < value {
+				return 0
+			}
+
 			v := util.Min(1, remainingHotels[hotel])
+
 			remainingHotels[hotel] -= 1
+			remainingMoney -= value
 			return util.Max(v, 0)
 		}
 
-		actions = append(actions, Action_PurchaseStock{
+		action := Action_PurchaseStock{
 			Purchases: [3]StockPurchase{
 				{
 					Hotel:  combination[0],
@@ -80,8 +93,39 @@ func (game *Game) getPurchaseStockActions() []gmcts.Action {
 					Amount: use(combination[2]),
 				},
 			},
-		})
+		}
+
+		// scan through the created purchases array to eliminate the actions which don't do anything
+		// created as a local function for code clarity
+		isPointless := func() bool {
+			hasHotel := false
+			totalAmount := 0
+			for _, p := range action.Purchases {
+				totalAmount += p.Amount
+				if p.Hotel != NoHotel {
+					hasHotel = true
+				}
+			}
+
+			if totalAmount < 1 {
+				return true
+			}
+
+			if hasHotel == false {
+				return true
+			}
+
+			return false
+		}
+
+		if isPointless() == false {
+			actions = append(actions, action)
+		}
 	}
+
+	actions = append([]gmcts.Action{
+		Action_PurchaseStock{},
+	}, actions...)
 
 	return actions
 }
@@ -163,13 +207,9 @@ func (game *Game) hasRemainingTiles() bool {
 	return false
 }
 
-// canEnd
+// CanEnd
 // returns true if it's possible for a player to 'declare' the game over
-func (game *Game) canEnd() (string, bool) {
-
-	if game.hasRemainingTiles() {
-		return "no tiles left somehow", true
-	}
+func (game *Game) CanEnd() (string, bool) {
 
 	// if there are any chains larger than 40, the game can end
 	for _, size := range game.Computed.LargestChains {

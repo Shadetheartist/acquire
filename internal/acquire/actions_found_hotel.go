@@ -26,7 +26,8 @@ func (game *Game) applyPickHotelToFoundAction(action Action_PickHotelToFound) {
 	newPlacedHotel := game.placeTileOnBoard(tile, action.Hotel)
 	propagateHotelChain(game, newPlacedHotel)
 
-	err := game.CurrentPlayer().takeStockFromBank(game, action.Hotel, 1)
+	remainingStock := game.Stocks[action.Hotel.Index()]
+	err := game.CurrentPlayer().takeStockFromBank(game, action.Hotel, util.Min(1, remainingStock))
 	if err != nil {
 		// this indicates that an action was generated which was invalid
 		panic(err)

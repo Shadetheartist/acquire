@@ -13,14 +13,14 @@ func propagateHotelChain(game *Game, rootHotel PlacedHotel) {
 
 	// root stack push
 	stack = append(stack, rootHotel)
-	var placedHotel PlacedHotel
+	var currentPlacedHotel PlacedHotel
 
 	for len(stack) > 0 {
 		// pop off stack
-		placedHotel, stack = stack[len(stack)-1], stack[:len(stack)-1]
-		idx := int(placedHotel.Tile)
+		currentPlacedHotel, stack = stack[len(stack)-1], stack[:len(stack)-1]
+		idx := int(currentPlacedHotel.Tile)
 
-		if placedHotel.Hotel == NoHotel {
+		if currentPlacedHotel.Hotel == NoHotel {
 			continue
 		}
 
@@ -33,17 +33,23 @@ func propagateHotelChain(game *Game, rootHotel PlacedHotel) {
 		visited[idx] = true
 
 		// the hotel we're already propagating
-		if placedHotel.Hotel == rootHotel.Hotel && placedHotel != rootHotel {
+		if currentPlacedHotel.Hotel == rootHotel.Hotel && currentPlacedHotel != rootHotel {
 			continue
 		}
 
-		game.Board[placedHotel.Tile.Index()] = PlacedHotel{
+		// replace tile on board
+		game.Board[currentPlacedHotel.Tile.Index()] = PlacedHotel{
 			Hotel: rootHotel.Hotel,
-			Tile:  placedHotel.Tile,
+			Tile:  currentPlacedHotel.Tile,
+		}
+		// track chain size
+		game.ChainSize[rootHotel.Hotel.Index()]++
+		if currentPlacedHotel.Hotel != UndefinedHotel {
+			game.ChainSize[currentPlacedHotel.Hotel.Index()]--
 		}
 
 		// add neighbors to stack
-		neighborPts := placedHotel.Tile.Pos().OrthogonalNeighbours()
+		neighborPts := currentPlacedHotel.Tile.Pos().OrthogonalNeighbours()
 		neighbors := util.Map(neighborPts, func(val util.Point[int]) PlacedHotel {
 			if !isInBounds(val.X, val.Y) {
 				return PlacedHotel{}

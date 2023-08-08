@@ -89,6 +89,13 @@ func renderPlayerInventories(game *acquire.Game) {
 	nameFillSize := 9
 	fillSize := 3
 
+	fmt.Print(fill("", nameFillSize))
+	fmt.Print(fill("", nameFillSize))
+	for _, h := range acquire.HotelChainList {
+		fmt.Print(fill(strconv.Itoa(game.ChainSize[h.Index()]), fillSize))
+	}
+	fmt.Println()
+
 	fmt.Print(fill(" ", nameFillSize))
 	fmt.Print(fill("Money", nameFillSize))
 	for _, h := range acquire.HotelChainList {
