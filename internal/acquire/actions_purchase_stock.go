@@ -16,6 +16,20 @@ type Action_PurchaseStock struct {
 	Purchases [3]StockPurchase
 }
 
+// AsMap
+// returns the purchases associated with this action in a map.
+// NoHotel is not included as a key in the map
+func (a Action_PurchaseStock) AsMap() map[Hotel]int {
+	m := make(map[Hotel]int)
+	for _, p := range a.Purchases {
+		if p.Hotel == NoHotel {
+			continue
+		}
+		m[p.Hotel] += p.Amount
+	}
+	return m
+}
+
 func (a Action_PurchaseStock) Type() ActionType {
 	return ActionType_PurchaseStock
 }

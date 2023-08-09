@@ -1,5 +1,7 @@
 package acquire
 
+import "errors"
+
 type Hotel int
 
 func (h Hotel) String() string {
@@ -75,4 +77,21 @@ const (
 // maps the index range [0-6] to valid hotel chains from HotelChainList
 func ChainFromIdx(idx int) Hotel {
 	return HotelChainList[idx]
+}
+
+// ChainFromInitial
+// Returns the hotel chain associated with an initial, or otherwise NoHotel
+func ChainFromInitial(initial string) (Hotel, error) {
+	for idx, s := range hotelInitials {
+		if s == initial {
+			return Hotel(idx), nil
+		}
+	}
+
+	return NoHotel, errors.New("chain not found from initial " + initial)
+}
+
+func (h Hotel) Value(game *Game, amount int) int {
+	size := game.ChainSize[h.Index()]
+	return sharesCalc(h, size, amount)
 }

@@ -73,30 +73,62 @@ func handlePlaceTileActions(game *acquire.Game, actions []gmcts.Action) (gmcts.A
 }
 
 func handlePurchaseStockActions(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
-	fmt.Println("Select a Set of Stocks To Buy (Default=0):")
 
-	for i, a := range actions {
-		action := util.AsType[acquire.Action_PurchaseStock](a)
-
-		str := ""
-		for i, p := range action.Purchases {
-			if p.Hotel == acquire.NoHotel {
-				continue
-			}
-			str += p.Hotel.String()
-			if i < len(action.Purchases)-1 {
-				str += ", "
-			}
-		}
-
-		if str == "" {
-			str = "None"
-		}
-
-		fmt.Printf("%d: %s\n", i, str)
+	chains := ""
+	for _, h := range game.Computed.ActiveChains {
+		chains += fmt.Sprintf("%s: $%d - [%s]\n", h.String(), h.Value(game, 1), h.Initial())
 	}
 
-	return getSelection(actions)
+	fmt.Println("Available Stock:\n" + chains)
+	fmt.Println("Select a Set of Stocks To Buy (Default=None):")
+
+	input, err := getInput()
+	if err != nil {
+		return nil, err
+	}
+
+	// map string of initials to slice of hotels
+	inputHotelMap := make(map[acquire.Hotel]int)
+	for _, c := range input {
+		hotel, err := acquire.ChainFromInitial(string(c))
+		if err != nil {
+			return nil, err
+		}
+		inputHotelMap[hotel]++
+	}
+
+	// local function comparing the input hotel map to some input map
+	isInputMapEqual := func(m map[acquire.Hotel]int) bool {
+
+		if len(m) != len(inputHotelMap) {
+			return false
+		}
+
+		for k, v := range m {
+			iv, ok := inputHotelMap[k]
+			if !ok {
+				return false
+			}
+
+			if iv != v {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	// validate the hotels against the actions in a way where order doesn't matter
+	for _, a := range actions {
+		action := util.AsType[acquire.Action_PurchaseStock](a)
+		hotelMap := action.AsMap()
+		if isInputMapEqual(hotelMap) {
+			return action, nil
+		}
+	}
+
+	return nil, errors.New("not a valid input")
+
 }
 
 func handlePickHotelToFoundActions(game *acquire.Game, actions []gmcts.Action) (gmcts.Action, error) {
@@ -205,6 +237,9 @@ func getInput() (string, error) {
 
 		return "", err
 	}
+
+	input = strings.Trim(input, " ")
+	input = strings.ToUpper(input)
 
 	return input, nil
 }
