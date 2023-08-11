@@ -3,7 +3,6 @@ package main
 import (
 	"acquire/internal/acquire"
 	"acquire/internal/ai"
-	"acquire/internal/console_interface"
 	"acquire/internal/util"
 	"encoding/csv"
 	"fmt"
@@ -69,13 +68,13 @@ func runGame(seed int, smartPlayerIntelligence int, display bool) *acquire.Game 
 	for _, player := range game.Players {
 		agents[player.Id] = ai.NewStupidAgent()
 	}
-	agents[game.Players[0].Id] = ai.NewHumanAgent()
+	//agents[game.Players[0].Id] = ai.NewHumanAgent()
 	agents[game.Players[1].Id] = ai.NewSmartAgent(smartPlayerIntelligence)
 
 	for !game.IsTerminal() {
 
 		if display {
-			console_interface.Render(game)
+			acquire.Render(game)
 		}
 
 		agent := agents[game.CurrentPlayer().Id]
@@ -91,7 +90,7 @@ func runGame(seed int, smartPlayerIntelligence int, display bool) *acquire.Game 
 
 	if display {
 
-		console_interface.Render(game)
+		acquire.Render(game)
 
 		fmt.Println()
 		reason, end := game.CanEnd()

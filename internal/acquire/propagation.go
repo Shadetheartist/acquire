@@ -18,52 +18,52 @@ func propagateHotelChain(game *Game, rootHotel PlacedHotel) {
 	for len(stack) > 0 {
 		// pop off stack
 		currentPlacedHotel, stack = stack[len(stack)-1], stack[:len(stack)-1]
-		idx := int(currentPlacedHotel.Tile)
-
-		if currentPlacedHotel.Hotel == NoHotel {
-			continue
-		}
-
-		//avoid revisiting
-		if visited[idx] {
-			continue
-		}
-
-		//keep track of what has been visited already
-		visited[idx] = true
-
-		// the hotel we're already propagating
-		if currentPlacedHotel.Hotel == rootHotel.Hotel && currentPlacedHotel != rootHotel {
-			continue
-		}
 
 		// replace tile on board
-		game.Board[currentPlacedHotel.Tile.Index()] = PlacedHotel{
-			Hotel: rootHotel.Hotel,
-			Tile:  currentPlacedHotel.Tile,
-		}
-		// track chain size
-		game.ChainSize[rootHotel.Hotel.Index()]++
-		if currentPlacedHotel.Hotel != UndefinedHotel {
-			game.ChainSize[currentPlacedHotel.Hotel.Index()]--
+		if currentPlacedHotel.Hotel != rootHotel.Hotel {
+			game.Board[currentPlacedHotel.Tile.Index()] = PlacedHotel{
+				Hotel: rootHotel.Hotel,
+				Tile:  currentPlacedHotel.Tile,
+			}
+
+			// chain got bigger
+			if currentPlacedHotel.Hotel != UndefinedHotel {
+				game.modifyChainSize(currentPlacedHotel.Hotel, -1)
+			}
+
+			game.modifyChainSize(rootHotel.Hotel, 1)
 		}
 
 		// add neighbors to stack
 		neighborPts := currentPlacedHotel.Tile.Pos().OrthogonalNeighbours()
-		neighbors := util.Map(neighborPts, func(val util.Point[int]) PlacedHotel {
-			if !isInBounds(val.X, val.Y) {
-				return PlacedHotel{}
+
+		for _, pt := range neighborPts {
+
+			if !isInBounds(pt.X, pt.Y) {
+				continue
 			}
 
-			idx := index(val.X, val.Y)
+			neighbourIdx := index(pt.X, pt.Y)
+			neighbor := game.Board[neighbourIdx]
 
-			neighbor := game.Board[idx]
+			// don't add NoHotel neighbors to the stack
+			if neighbor.Hotel == NoHotel {
+				continue
+			}
 
-			return neighbor
-		})
+			//avoid revisiting
+			if visited[neighbourIdx] {
+				continue
+			}
 
-		stack = append(stack, neighbors...)
+			// the hotel we're already propagating, no need to propagate this direction
+			if neighbor.Hotel == rootHotel.Hotel {
+				continue
+			}
 
+			visited[neighbourIdx] = true
+			stack = append(stack, neighbor)
+		}
 	}
 }
 

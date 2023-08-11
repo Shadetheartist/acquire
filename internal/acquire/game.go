@@ -120,14 +120,37 @@ func (game *Game) Winners() []gmcts.Player {
 	return outSlice
 }
 
+// playerTurn
+// returns the index of the player whose turn it is (if the offset is zero).
+// supply a non-zero offset to return the index of the play whose turn it will be after 'offset' turns.
+func (game *Game) playerTurn(offset int) int {
+	return (game.Turn + offset) % len(game.Players)
+}
+
+// CurrentPlayer
+// the player whose turn it is (does not account for merger, use ActivePlayer forthat)
 func (game *Game) CurrentPlayer() *Player {
 	return &game.Players[game.playerTurn(0)]
 }
 
+// NextPlayer
+// the player whose turn it is after the current turn
 func (game *Game) NextPlayer() *Player {
 	return &game.Players[game.playerTurn(1)]
 }
 
+// ActivePlayer
+// this is just the current player, but if there is a merger happening, it is the player taking the merge action
+func (game *Game) ActivePlayer() *Player {
+	if game.NextActionType == ActionType_Merge {
+		return &game.Players[game.MergerState.MergingPlayerIdx]
+	}
+
+	return game.CurrentPlayer()
+}
+
+// PlayerSlice
+// a slice containing each player in the game
 func (game *Game) PlayerSlice() []Player {
 	playerSlice := make([]Player, len(game.Players))
 
@@ -138,13 +161,10 @@ func (game *Game) PlayerSlice() []Player {
 	return playerSlice
 }
 
-// playerTurn
-// returns the index of the player whose turn it is (if the offset is zero).
-// supply a non-zero offset to return the index of the play whose turn it will be after 'offset' turns.
-func (game *Game) playerTurn(offset int) int {
-	return (game.Turn + offset) % len(game.Players)
-}
-
+// payShareholderBonuses
+// calculates and pays out shareholder bonuses to each player
+// the majority shareholder gets the major bonus, the minority shareholder gets the minor bonus
+// if there is no minor shareholder the major shareholder gets both bonuses combined
 func (game *Game) payShareholderBonuses(hotel Hotel) {
 	size := game.ChainSize[hotel.Index()]
 	majShareholder, majShareholderShares, minorShareholder, minorShareholderShares := game.getShareholders(Stock(hotel))
@@ -167,6 +187,9 @@ func (game *Game) payShareholderBonuses(hotel Hotel) {
 	minorShareholder.Money += minBonus
 }
 
+// getShareholders
+// returns the major and minor shareholders, and how many shares they have
+// if there is no shareholder it will return nil for both players
 func (game *Game) getShareholders(s Stock) (*Player, int, *Player, int) {
 
 	var majorShareholder *Player
@@ -220,7 +243,7 @@ func (game *Game) placeTileOnBoard(tile Tile, hotel Hotel) PlacedHotel {
 	game.LastPlacedTile = tile
 
 	if hotel != NoHotel && hotel != UndefinedHotel {
-		game.ChainSize[hotel.Index()]++
+		game.modifyChainSize(hotel, 1)
 	}
 
 	return newPlacedHotel
@@ -234,4 +257,10 @@ func (game *Game) GetPlayerById(id int) *Player {
 	}
 
 	return nil
+}
+
+// modifyChainSize
+// just want to keep track of these in a func, easier to track down usage
+func (game *Game) modifyChainSize(hotel Hotel, amount int) {
+	game.ChainSize[hotel.Index()] += amount
 }

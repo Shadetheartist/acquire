@@ -126,7 +126,7 @@ func (player *Player) canTradeIn(game *Game, in Hotel, out Hotel, tradeInAmount 
 		return errors.New("trade in amount must be a multiple of two")
 	}
 
-	if player.Stocks[in] < tradeInAmount {
+	if player.Stocks[in.Index()] < tradeInAmount {
 		return errors.New("player does not have enough stock to trade in for")
 	}
 

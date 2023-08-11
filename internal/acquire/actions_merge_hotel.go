@@ -26,13 +26,15 @@ const (
 	Sell
 )
 
+const MAX_MERGE_SUB_ACTIONS = 2
+
 type MergeSubAction struct {
 	MergeType MergerAction
 	Amount    int
 }
 
 type Action_Merge struct {
-	Actions [3]MergeSubAction
+	Actions [MAX_MERGE_SUB_ACTIONS]MergeSubAction
 }
 
 func (a Action_Merge) Type() ActionType {
@@ -42,19 +44,82 @@ func (a Action_Merge) Type() ActionType {
 func (game *Game) getMergeHotelActions() []gmcts.Action {
 	mergeActions := make([]gmcts.Action, 0)
 
+	// can always hold
 	mergeActions = append(mergeActions, Action_Merge{
-		Actions: [3]MergeSubAction{
+		// two 'hold's works the same as one
+		Actions: [MAX_MERGE_SUB_ACTIONS]MergeSubAction{
 			{
-				MergeType: Hold, // keeping it simple for now
+				MergeType: Hold,
 				Amount:    0,
 			},
 		},
 	})
 
+	activePlayer := game.ActivePlayer()
+	mergedHotel, err := game.getNextChainToMerge()
+	acquiringHotel := game.MergerState.AcquiringHotel
+	if err != nil {
+		panic(err)
+	}
+
+	numStocks := activePlayer.Stocks[mergedHotel.Index()]
+
+	// player can sell any number of their shares, so all options must be given
+	for j := 0; j < numStocks; j++ {
+		mergeActions = append(mergeActions, Action_Merge{
+			Actions: [MAX_MERGE_SUB_ACTIONS]MergeSubAction{
+				{
+					MergeType: Sell,
+					Amount:    j + 1,
+				},
+			},
+		})
+	}
+
+	// if the player has enough shares to trade,
+	// they can trade in any denomination mod 2
+	for i := 0; i < numStocks/2; i++ {
+
+		tradeInAmount := (i + 1) * 2
+
+		if game.Stocks[acquiringHotel.Index()] < tradeInAmount {
+			break
+		}
+
+		// default one with no selling
+		mergeActions = append(mergeActions, Action_Merge{
+			Actions: [MAX_MERGE_SUB_ACTIONS]MergeSubAction{
+				{
+					MergeType: Trade,
+					Amount:    tradeInAmount,
+				},
+			},
+		})
+
+		// for each trade made, they can also sell any amount of the remaining shares
+		// (this gets out of hand a bit in terms of combinations)
+		for j := 0; j < numStocks-tradeInAmount; j++ {
+			mergeActions = append(mergeActions, Action_Merge{
+				Actions: [MAX_MERGE_SUB_ACTIONS]MergeSubAction{
+					{
+						MergeType: Trade,
+						Amount:    tradeInAmount,
+					},
+					{
+						MergeType: Sell,
+						Amount:    j + 1,
+					},
+				},
+			})
+		}
+
+	}
+
 	return mergeActions
 }
 
-func getNextChainToMerge(mergerState *MergerState) (Hotel, error) {
+func (game *Game) getNextChainToMerge() (Hotel, error) {
+	mergerState := game.MergerState
 	for idx, playersRemaining := range mergerState.ChainsToMerge {
 		if playersRemaining > 0 {
 			return ChainFromIdx(idx), nil
@@ -65,7 +130,7 @@ func getNextChainToMerge(mergerState *MergerState) (Hotel, error) {
 
 func (game *Game) applyMergeHotel(action Action_Merge) {
 
-	hotelToMerge, err := getNextChainToMerge(&game.MergerState)
+	hotelToMerge, err := game.getNextChainToMerge()
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +143,7 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 		game.MergerState.ChainsToMerge[hotelToMerge.Index()] -= 1
 
 		// err wil be set if there are no more chains to merge
-		_, err := getNextChainToMerge(&game.MergerState)
+		_, err := game.getNextChainToMerge()
 
 		// if there's no more chains to process, we're done merging
 		if err != nil {
@@ -118,9 +183,6 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 			break
 		}
 	}
-
-	// must reset the chain size to zero (after propagating)
-	game.ChainSize[hotelToMerge.Index()] = 0
 
 	goNext()
 }
