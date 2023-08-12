@@ -118,10 +118,10 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 
 		mergedChainCounter := 0
 		// prepare the 'chains to merge' array
-		for _, h := range HotelChainList {
-			// ok = this hotel is in the 'largest chains' slice, but isn't the largest chain
-			_, ok := util.IndexOf(largestChains[:1], h)
-			if ok {
+		for _, h := range chainsInNeighbors {
+			// ok = this hotel is in the largest_chains slice
+			_, ok := util.IndexOf(largestChains, h)
+			if !ok {
 				game.MergerState.ChainsToMerge[h.Index()] = len(game.Players)
 				game.MergerState.MergedChains[mergedChainCounter] = h
 				mergedChainCounter++

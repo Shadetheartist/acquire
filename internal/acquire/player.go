@@ -179,7 +179,7 @@ func (player *Player) sellStock(game *Game, stock Stock, amount int) error {
 	hotel := Hotel(stock)
 	err = player.giveStockToBank(game, hotel, amount)
 	if err != nil {
-		panic("shouldn't give more than there are in player's inventory")
+		return errors.New("shouldn't give more than there are in player's inventory")
 	}
 
 	chainSize := game.ChainSize[hotel.Index()]

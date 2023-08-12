@@ -162,7 +162,8 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 		panic(err)
 	}
 
-	player := game.Players[game.MergerState.MergingPlayerIdx]
+	// references references references...
+	player := &game.Players[game.MergerState.MergingPlayerIdx]
 
 	goNext := func() {
 		game.MergerState.MergingPlayerIdx += 1
