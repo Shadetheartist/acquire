@@ -2,6 +2,7 @@ package acquire
 
 import (
 	"acquire/internal/util"
+	"fmt"
 	"git.sr.ht/~bonbon/gmcts"
 )
 
@@ -12,6 +13,13 @@ type Action_PlaceTile struct {
 
 func (a Action_PlaceTile) Type() ActionType {
 	return ActionType_PlaceTile
+}
+
+func (a Action_PlaceTile) String(game *Game) string {
+	return fmt.Sprintf("Player %s places tile %s.",
+		game.CurrentPlayer().Name(),
+		a.Tile.String(),
+	)
 }
 
 func (game *Game) getPlaceTileActions() []gmcts.Action {
@@ -108,12 +116,15 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 			return
 		}
 
+		mergedChainCounter := 0
 		// prepare the 'chains to merge' array
 		for _, h := range HotelChainList {
 			// ok = this hotel is in the 'largest chains' slice, but isn't the largest chain
 			_, ok := util.IndexOf(largestChains[:1], h)
 			if ok {
 				game.MergerState.ChainsToMerge[h.Index()] = len(game.Players)
+				game.MergerState.MergedChains[mergedChainCounter] = h
+				mergedChainCounter++
 			}
 		}
 

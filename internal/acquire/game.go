@@ -28,6 +28,10 @@ type MergerState struct {
 	ChainsToMerge    [NUM_CHAINS]int
 	MergingPlayerIdx int
 	AcquiringHotel   Hotel
+
+	// to keep track of which chains were merged for use in console output
+	// geometrically there can only ever be a merger of 4 chains, with _3_ getting merged and one acquiring
+	MergedChains [3]Hotel
 }
 
 type Game struct {

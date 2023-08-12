@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"git.sr.ht/~bonbon/gmcts"
 	"os"
+	"strings"
 )
 
 type StockPurchase struct {
@@ -14,6 +15,30 @@ type StockPurchase struct {
 
 type Action_PurchaseStock struct {
 	Purchases [3]StockPurchase
+}
+
+func (a Action_PurchaseStock) Type() ActionType {
+	return ActionType_PurchaseStock
+}
+
+func (a Action_PurchaseStock) String(game *Game) string {
+	var purchaseStrs []string
+	for _, p := range a.Purchases {
+		if p.Amount > 0 {
+			purchaseStrs = append(purchaseStrs, fmt.Sprintf("%d stock in %s", p.Amount, p.Hotel.String()))
+		}
+	}
+
+	purchaseStr := strings.Join(purchaseStrs, ", ")
+
+	if len(purchaseStrs) < 1 {
+		purchaseStr = "nothing"
+	}
+
+	return fmt.Sprintf("Player %s buys %s.",
+		game.CurrentPlayer().Name(),
+		purchaseStr,
+	)
 }
 
 // AsMap
@@ -28,10 +53,6 @@ func (a Action_PurchaseStock) AsMap() map[Hotel]int {
 		m[p.Hotel] += p.Amount
 	}
 	return m
-}
-
-func (a Action_PurchaseStock) Type() ActionType {
-	return ActionType_PurchaseStock
 }
 
 func generateCombinations(activeHotels []Hotel) [][]Hotel {
@@ -59,7 +80,7 @@ func (game *Game) getPurchaseStockActions() []gmcts.Action {
 	options := append(game.Computed.ActiveChains, NoHotel)
 	combinations := generateCombinations(options)
 
-	actions := make([]gmcts.Action, 0)
+	actions := make([]gmcts.Action, 0, 32)
 
 	for _, combination := range combinations {
 

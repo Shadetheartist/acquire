@@ -38,6 +38,7 @@ const (
 
 type IAction interface {
 	Type() ActionType
+	String(game *Game) string
 }
 
 func (game *Game) ApplyAction(gmctsAction gmcts.Action) (gmcts.Game, error) {

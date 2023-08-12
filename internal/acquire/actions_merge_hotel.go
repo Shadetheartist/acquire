@@ -1,8 +1,11 @@
 package acquire
 
 import (
+	"acquire/internal/util"
 	"errors"
+	"fmt"
 	"git.sr.ht/~bonbon/gmcts"
+	"strings"
 )
 
 type MergerAction int
@@ -37,6 +40,29 @@ type Action_Merge struct {
 	Actions [MAX_MERGE_SUB_ACTIONS]MergeSubAction
 }
 
+func (a Action_Merge) String(game *Game) string {
+	var actionStrings []string
+	for _, action := range a.Actions {
+		actionStrings = append(actionStrings, fmt.Sprintf("%s %d", action.MergeType.String(), action.Amount))
+	}
+
+	actionsStr := strings.Join(actionStrings, ", ")
+	actualHotels := util.Filter(game.MergerState.MergedChains[:], func(val Hotel) bool {
+		return val != NoHotel
+	})
+	hotelNames := util.Map(actualHotels, func(val Hotel) string {
+		return val.String()
+	})
+	mergedHotels := strings.Join(hotelNames, " and ")
+
+	return fmt.Sprintf("Player %s chooses to merge %s into %s via %s",
+		game.ActivePlayer().Name(),
+		mergedHotels,
+		game.MergerState.AcquiringHotel.String(),
+		actionsStr,
+	)
+}
+
 func (a Action_Merge) Type() ActionType {
 	return ActionType_Merge
 }
@@ -57,10 +83,11 @@ func (game *Game) getMergeHotelActions() []gmcts.Action {
 
 	activePlayer := game.ActivePlayer()
 	mergedHotel, err := game.getNextChainToMerge()
-	acquiringHotel := game.MergerState.AcquiringHotel
 	if err != nil {
 		panic(err)
 	}
+
+	acquiringHotel := game.MergerState.AcquiringHotel
 
 	numStocks := activePlayer.Stocks[mergedHotel.Index()]
 

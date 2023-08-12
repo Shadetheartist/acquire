@@ -2,11 +2,16 @@ package acquire
 
 import (
 	"acquire/internal/util"
+	"fmt"
 	"git.sr.ht/~bonbon/gmcts"
 )
 
 type Action_PickHotelToFound struct {
 	Hotel Hotel
+}
+
+func (a Action_PickHotelToFound) String(game *Game) string {
+	return fmt.Sprintf("Player %s chooses to found %s.", game.CurrentPlayer().Name(), a.Hotel.String())
 }
 
 func (a Action_PickHotelToFound) Type() ActionType {
