@@ -69,19 +69,20 @@ func runGame(seed int, smartPlayerIntelligence int, display bool) *acquire.Game 
 		agents[player.Id] = ai.NewStupidAgent()
 	}
 	//agents[game.Players[0].Id] = ai.NewHumanAgent()
-	//agents[game.Players[0].Id] = ai.NewSmartAgent(smartPlayerIntelligence)
-	//agents[game.Players[1].Id] = ai.NewSmartAgent(smartPlayerIntelligence)
+	agents[game.Players[0].Id] = ai.NewSmartAgent(smartPlayerIntelligence * 2)
+	agents[game.Players[1].Id] = ai.NewSmartAgent(smartPlayerIntelligence)
 
 	for !game.IsTerminal() {
-		if display {
-			acquire.Render(game)
-		}
 
 		agent := agents[game.CurrentPlayer().Id]
 		actions := game.GetActions()
 		action, err := agent.SelectAction(game, actions)
 		if err != nil {
 			panic(err)
+		}
+
+		if display {
+			acquire.Render(game)
 		}
 
 		if _action, ok := action.(acquire.IAction); ok {
