@@ -35,6 +35,9 @@ type MergerState struct {
 }
 
 type Game struct {
+	// indicates that this game is part of a simulation
+	// useful for debugging
+	Sim            bool
 	Players        [MAX_PLAYERS]Player
 	NextActionType ActionType
 
@@ -195,8 +198,14 @@ func (game *Game) payShareholderBonuses(hotel Hotel) {
 		minorShareholderShares,
 	)
 
-	majShareholder.Money += majBonus
-	minorShareholder.Money += minBonus
+	// only apply money modification when the player is the active player to avoid triggering twice
+	if majShareholder.Id == game.ActivePlayer().Id {
+		majShareholder.Money += majBonus
+	}
+
+	if minorShareholder.Id == game.ActivePlayer().Id {
+		minorShareholder.Money += minBonus
+	}
 }
 
 // getShareholders

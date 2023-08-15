@@ -17,7 +17,7 @@ func Clear() {
 }
 
 func Render(game *Game) {
-
+	Clear()
 	fmt.Println()
 	fmt.Printf("Acquire | Turn %d | Tiles Left: %d\n", game.Turn, game.NumRemainingTiles())
 	renderPlayers(game)

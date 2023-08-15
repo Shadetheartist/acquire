@@ -34,11 +34,15 @@ func runGame(config *GameConfig) *acquire.Game {
 
 	for !game.IsTerminal() {
 
-		agent := agents[game.CurrentPlayer().Id]
+		currentPlayerType := config.PlayerTypes[game.ActivePlayer().Id-1]
+		agent := agents[game.ActivePlayer().Id]
 		actions := game.GetActions()
 
-		// render before play
-		acquire.Render(game)
+		if currentPlayerType == Human {
+			// render before play
+			acquire.Render(game)
+		}
+
 		action, err := agent.SelectAction(game, actions)
 		if err != nil {
 			panic(err)
