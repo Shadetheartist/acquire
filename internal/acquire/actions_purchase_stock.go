@@ -212,10 +212,10 @@ func (game *Game) end(_ string) {
 	}
 
 	// sell all stocks
-	for _, p := range game.Players {
+	for i := range game.Players {
 		for _, hotel := range HotelChainList {
 			stock := Stock(hotel)
-			err := p.sellStock(game, stock, p.Stocks[hotel.Index()])
+			err := game.Players[i].sellStock(game, stock, game.Players[i].Stocks[hotel.Index()])
 			if err != nil {
 				panic(err)
 			}

@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	runGame(0, 550, true)
+	runGame(1, 100, true)
 }
 
 func analyzeAIPerformance() {
@@ -69,7 +69,7 @@ func runGame(seed int, smartPlayerIntelligence int, display bool) *acquire.Game 
 		agents[player.Id] = ai.NewStupidAgent()
 	}
 	//agents[game.Players[0].Id] = ai.NewHumanAgent()
-	agents[game.Players[0].Id] = ai.NewSmartAgent(smartPlayerIntelligence * 2)
+	agents[game.Players[0].Id] = ai.NewSmartAgent(smartPlayerIntelligence)
 	agents[game.Players[1].Id] = ai.NewSmartAgent(smartPlayerIntelligence)
 
 	for !game.IsTerminal() {
