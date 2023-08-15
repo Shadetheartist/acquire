@@ -11,9 +11,12 @@ var chars = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i"}
 
 const FILL_SIZE = 3
 
-func Render(game *Game) {
+func Clear() {
 	// this clears the console (kinda)
 	fmt.Print("\033[H\033[2J")
+}
+
+func Render(game *Game) {
 
 	fmt.Println()
 	fmt.Printf("Acquire | Turn %d | Tiles Left: %d\n", game.Turn, game.NumRemainingTiles())
@@ -73,7 +76,7 @@ func renderCurrentPlayer(game *Game) {
 func renderPlayers(game *Game) {
 	fmt.Printf(fill("Player:", 8))
 	fillSize := 10
-	for _, p := range game.Players {
+	for _, p := range game.PlayerSlice() {
 		if p.Id == game.CurrentPlayer().Id {
 			fmt.Print(fill(fmt.Sprintf("[%s] ", p.Name()), fillSize))
 			continue
@@ -119,6 +122,7 @@ func renderPlayerInventories(game *Game) {
 		fmt.Print(fill(strconv.Itoa(game.Stocks[h]), fillSize))
 	}
 
+	fmt.Println()
 	fmt.Println()
 }
 

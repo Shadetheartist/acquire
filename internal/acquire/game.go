@@ -9,7 +9,7 @@ import (
 const BOARD_MAX_X = 12
 const BOARD_MAX_Y = 9
 
-const MAX_PLAYERS = 2
+const MAX_PLAYERS = 6
 const MAX_TILES_IN_HAND = 6
 const NUM_CHAINS = 7
 
@@ -124,23 +124,30 @@ func (game *Game) Winners() []gmcts.Player {
 	return outSlice
 }
 
+// numRealPlayers
+// returns the amount of players who are playing in this game, as the array size is static
+// a player with an ID of 0 is considered not playing
+func (game *Game) numRealPlayers() int {
+	c := 0
+	for _, p := range game.Players {
+		if p.Id > 0 {
+			c++
+		}
+	}
+	return c
+}
+
 // playerTurn
 // returns the index of the player whose turn it is (if the offset is zero).
 // supply a non-zero offset to return the index of the play whose turn it will be after 'offset' turns.
 func (game *Game) playerTurn(offset int) int {
-	return (game.Turn + offset) % len(game.Players)
+	return (game.Turn + offset) % game.numRealPlayers()
 }
 
 // CurrentPlayer
 // the player whose turn it is (does not account for merger, use ActivePlayer forthat)
 func (game *Game) CurrentPlayer() *Player {
 	return &game.Players[game.playerTurn(0)]
-}
-
-// NextPlayer
-// the player whose turn it is after the current turn
-func (game *Game) NextPlayer() *Player {
-	return &game.Players[game.playerTurn(1)]
 }
 
 // ActivePlayer
@@ -156,9 +163,10 @@ func (game *Game) ActivePlayer() *Player {
 // PlayerSlice
 // a slice containing each player in the game
 func (game *Game) PlayerSlice() []Player {
-	playerSlice := make([]Player, len(game.Players))
+	numPlayers := game.numRealPlayers()
+	playerSlice := make([]Player, numPlayers)
 
-	for i := 0; i < len(game.Players); i++ {
+	for i := 0; i < numPlayers; i++ {
 		playerSlice[i] = game.Players[i]
 	}
 

@@ -54,7 +54,7 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 	if action.Tile == NoTile {
 		game.SkippedTurnsInARow++
 
-		if game.SkippedTurnsInARow > len(game.Players) {
+		if game.SkippedTurnsInARow > game.numRealPlayers() {
 			game.end("no one had any moves left to play")
 			return
 		}
@@ -122,7 +122,7 @@ func (game *Game) applyPlaceTileAction(action Action_PlaceTile) {
 			// ok = this hotel is in the largest_chains slice
 			_, ok := util.IndexOf(largestChains, h)
 			if !ok {
-				game.MergerState.ChainsToMerge[h.Index()] = len(game.Players)
+				game.MergerState.ChainsToMerge[h.Index()] = game.numRealPlayers()
 				game.MergerState.MergedChains[mergedChainCounter] = h
 				mergedChainCounter++
 			}

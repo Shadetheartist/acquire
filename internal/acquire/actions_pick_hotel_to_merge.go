@@ -46,7 +46,7 @@ func (game *Game) applyPickHotelToMergeAction(action Action_PickHotelToMerge) {
 		// ok = this hotel is in the 'largest chains' slice, but isn't the largest chain
 		_, ok := util.IndexOf(largestAcquiredChains, h)
 		if ok {
-			game.MergerState.ChainsToMerge[h.Index()] = len(game.Players)
+			game.MergerState.ChainsToMerge[h.Index()] = game.numRealPlayers()
 			game.MergerState.MergedChains[mergedChainCounter] = h
 			mergedChainCounter++
 		}

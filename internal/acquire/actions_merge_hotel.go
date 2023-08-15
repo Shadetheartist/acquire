@@ -167,7 +167,7 @@ func (game *Game) applyMergeHotel(action Action_Merge) {
 
 	goNext := func() {
 		game.MergerState.MergingPlayerIdx += 1
-		game.MergerState.MergingPlayerIdx = game.MergerState.MergingPlayerIdx % len(game.Players)
+		game.MergerState.MergingPlayerIdx = game.MergerState.MergingPlayerIdx % game.numRealPlayers()
 		game.MergerState.ChainsToMerge[hotelToMerge.Index()] -= 1
 
 		// err wil be set if there are no more chains to merge
